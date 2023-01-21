@@ -341,7 +341,7 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_atl (name_of_folder_where
                 fig.update_layout ( height = 1500 * number_of_charts ,
                                     width = 4000 , margin = {'t': 300} ,
                                     title_text = f'{crypto_ticker} '
-                                                 f'on {exchange} with rebound level at {atl} with bpu1 on {human_time_of_bpu1}. Low_of_bpu2-Level={backlash} '+'<br> '
+                                                 f'with rebound level at {atl} with bpu1 on {human_time_of_bpu1}. Low_of_bpu2-Level={backlash} '+'<br> '
                                                  f'"{model}"',
                                     font = dict (
                                         family = "Courier New, monospace" ,
@@ -732,7 +732,7 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_atl (name_of_folder_where
 
                 fig.update_layout ( showlegend = False )
                 # fig.layout.annotations[0].update ( text = f"{crypto_ticker} "
-                #                                           f"on {exchange} with level formed by_high={atl}" )
+                #                                           f"with level formed by_high={atl}" )
                 fig.print_grid ()
 
                 fig.write_html ( where_to_plot_html )

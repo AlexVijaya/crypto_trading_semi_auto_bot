@@ -318,7 +318,7 @@ def plot_ohlcv_chart_with_levels_formed_by_fast_breakout_off_ath (name_of_folder
                 fig.update_layout ( height = 1500 * number_of_charts ,
                                     width = 4000 , margin = {'t': 300} ,
                                     title_text = f'{crypto_ticker} '
-                                                 f'on {exchange} with level formed by ath={ath} with pre_breakout_bar on {human_date_of_pre_breakout_bar}'+'<br> '
+                                                 f'with level formed by ath={ath} with pre_breakout_bar on {human_date_of_pre_breakout_bar}'+'<br> '
                                                  f'"{model}"',
                                     font = dict (
                                         family = "Courier New, monospace" ,
@@ -660,7 +660,7 @@ def plot_ohlcv_chart_with_levels_formed_by_fast_breakout_off_ath (name_of_folder
                     traceback.print_exc()
                 fig.update_layout ( showlegend = False )
                 # fig.layout.annotations[0].update ( text = f"{crypto_ticker} "
-                #                                           f"on {exchange} with level formed by_high={ath}" )
+                #                                           f"with level formed by_high={ath}" )
                 fig.print_grid ()
 
                 fig.write_html ( where_to_plot_html )

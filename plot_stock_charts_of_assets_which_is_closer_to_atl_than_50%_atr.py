@@ -332,7 +332,7 @@ def plot_ohlcv_charts_with_breakout_of_atl_situations_entry_point_next_day (name
                 fig.update_layout ( height = 1500 * number_of_charts ,
                                     width = 4000 , margin = {'t': 300} ,
                                     title_text = f'{crypto_ticker} '
-                                                 f'on {exchange} with level formed by atl={atl}'+'<br> '
+                                                 f'with level formed by atl={atl}'+'<br> '
                                                  f'"{model}"',
                                     font = dict (
                                         family = "Courier New, monospace" ,
@@ -712,7 +712,7 @@ def plot_ohlcv_charts_with_breakout_of_atl_situations_entry_point_next_day (name
                     traceback.print_exc()
                 fig.update_layout ( showlegend = False )
                 # fig.layout.annotations[0].update ( text = f"{crypto_ticker} "
-                #                                           f"on {exchange} with level formed by_low={atl}" )
+                #                                           f"with level formed by_low={atl}" )
                 fig.print_grid ()
 
                 fig.write_html ( where_to_plot_html )
