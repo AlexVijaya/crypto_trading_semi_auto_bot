@@ -216,8 +216,8 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_ath (name_of_folder_where
 
             close_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[
                 row_with_level_formed_by_rebound_off_ath , 'close_of_bpu2']
-            open_of_tvx = table_of_levels_formed_by_rebound_off_ath_df.loc[
-                row_with_level_formed_by_rebound_off_ath , 'open_of_tvx']
+            # open_of_tvx = table_of_levels_formed_by_rebound_off_ath_df.loc[
+            #     row_with_level_formed_by_rebound_off_ath , 'open_of_tvx']
 
 
             human_time_of_bpu1_list = human_time_of_bpu1.split ( " " )
@@ -642,7 +642,7 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_ath (name_of_folder_where
                 sell_limit =  round(sell_limit,3)
                 take_profit_3_to_1 =  round(take_profit_3_to_1,3)
                 take_profit_4_to_1 = round ( take_profit_4_to_1 , 3 )
-                open_of_tvx = round ( open_of_tvx , 3 )
+                # open_of_tvx = round ( open_of_tvx , 3 )
                 advanced_atr = round ( advanced_atr , 3 )
                 high_of_bsu = round ( high_of_bsu , 3 )
                 high_of_bpu1 = round ( high_of_bpu1 , 3 )

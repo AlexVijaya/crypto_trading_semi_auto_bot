@@ -189,8 +189,8 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_atl (name_of_folder_where
 
             close_of_bpu2 = table_of_levels_formed_by_rebound_off_atl_df.loc[
                 row_with_level_formed_by_rebound_off_atl , 'close_of_bpu2']
-            open_of_tvx = table_of_levels_formed_by_rebound_off_atl_df.loc[
-                row_with_level_formed_by_rebound_off_atl , 'open_of_tvx']
+            # open_of_tvx = table_of_levels_formed_by_rebound_off_atl_df.loc[
+            #     row_with_level_formed_by_rebound_off_atl , 'open_of_tvx']
 
             true_low_of_bsu = table_of_levels_formed_by_rebound_off_atl_df.loc[
                 row_with_level_formed_by_rebound_off_atl , 'true_low_of_bsu']
@@ -695,7 +695,7 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_atl (name_of_folder_where
                                          # f" | low_of_bpu1_more_decimals={true_low_of_bpu1}"
                                          # f" | low_of_bpu2_more_decimals={true_low_of_bpu2}" + "<br>"
                                          f" | close_of_bpu2={close_of_bpu2}"
-                                         f" | open_of_tvx={open_of_tvx}"
+                                         # f" | open_of_tvx={open_of_tvx}"
                                          f" | volume_of_bsu={int(volume_of_bsu)}" 
                                          f" | volume_of_bpu1={int(volume_of_bpu1)}" 
                                          f" | volume_of_bpu2={int(volume_of_bpu2)}" + "<br>"

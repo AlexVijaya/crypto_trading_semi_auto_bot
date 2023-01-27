@@ -151,7 +151,7 @@ def plot_ohlcv_charts_with_breakout_of_ath_situations_entry_point_next_day (name
             one_row_df = table_of_tickers_with_fast_breakout_of_ath_df.loc[[row_with_level_formed_by_ath_and_ready_for_fast_breakout]]
             crypto_ticker = table_of_tickers_with_fast_breakout_of_ath_df.loc[row_with_level_formed_by_ath_and_ready_for_fast_breakout , 'ticker']
             exchange = table_of_tickers_with_fast_breakout_of_ath_df.loc[row_with_level_formed_by_ath_and_ready_for_fast_breakout , 'exchange']
-            short_name = table_of_tickers_with_fast_breakout_of_ath_df.loc[row_with_level_formed_by_ath_and_ready_for_fast_breakout , 'short_name']
+            model = table_of_tickers_with_fast_breakout_of_ath_df.loc[row_with_level_formed_by_ath_and_ready_for_fast_breakout , 'model']
             print ( "crypto_ticker=" , crypto_ticker )
             print ( "exchange=" , exchange )
             ath = table_of_tickers_with_fast_breakout_of_ath_df.loc[row_with_level_formed_by_ath_and_ready_for_fast_breakout , 'ath']
@@ -332,7 +332,7 @@ def plot_ohlcv_charts_with_breakout_of_ath_situations_entry_point_next_day (name
                                     width = 4000 , margin = {'t': 300} ,
                                     title_text = f'{crypto_ticker} '
                                                  f'with level formed by ath={ath} with pre_breakout_bar on {human_date_of_pre_breakout_bar}'+'<br> '
-                                                 f'"{short_name}"',
+                                                 f'"{model}"',
                                     font = dict (
                                         family = "Courier New, monospace" ,
                                         size = 40 ,

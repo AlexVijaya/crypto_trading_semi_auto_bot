@@ -327,7 +327,7 @@ def plot_ohlcv_charts_with_breakout_of_atl_situations_entry_point_next_day(name_
                                     width = 4000 , margin = {'t': 300} ,
                                     title_text = f'{crypto_ticker} '
                                                  f'with level formed by atl={atl} with pre_breakout_bar on {human_date_of_pre_breakout_bar}' + '<br> '
-                                                                                                                                                             f'"{model}"' ,
+                                                 f'"{model}"' ,
                                     font = dict (
                                         family = "Courier New, monospace" ,
                                         size = 40 ,

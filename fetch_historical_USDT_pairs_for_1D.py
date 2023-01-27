@@ -12,8 +12,8 @@ import psycopg2
 import pandas as pd
 # import talib
 import datetime
-import ccxt as ccxt_not_async
-import ccxt.async_support as ccxt  # noqa: E402
+import ccxt
+# import ccxt.async_support as ccxt  # noqa: E402
 from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database,database_exists
 
@@ -175,17 +175,18 @@ new_counter=0
 not_active_pair_counter = 0
 list_of_inactive_pairs=[]
 
-async def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchange,
-                                                            counter,
+def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchange,
                                                             engine,timeframe='1d'):
     print("exchange=",exchange)
     global new_counter
     global list_of_inactive_pairs
     global not_active_pair_counter
-
-    exchange_object = getattr ( ccxt , exchange ) ()
-    exchange_object.enableRateLimit = True
-
+    exchange_object=False
+    try:
+        exchange_object = getattr ( ccxt , exchange ) ()
+        exchange_object.enableRateLimit = True
+    except:
+        pass
 
     try:
         # connection_to_usdt_trading_pairs_ohlcv = \
@@ -194,8 +195,10 @@ async def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,e
         #                                      "sql_databases" ,
         #                                      "all_exchanges_multiple_tables_historical_data_for_usdt_trading_pairs.db" ) )
 
-        await exchange_object.load_markets ()
+        exchange_object.load_markets ()
         list_of_all_symbols_from_exchange=exchange_object.symbols
+        # print(f"list_of_all_symbols_from_exchange={exchange}")
+        # print(list_of_all_symbols_from_exchange)
 
         list_of_trading_pairs_with_USDT = []
         list_of_trading_pairs_with_USD = []
@@ -205,7 +208,7 @@ async def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,e
             # for item in counter_gen():
             #     print ("item=",item)
 
-            counter =counter+1
+
 
             try:
                 print ( "exchange=" , exchange )
@@ -220,9 +223,9 @@ async def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,e
                     #         list_of_trading_pairs_with_USDT )
 
                     if ('active' in exchange_object.markets[trading_pair]) or (exchange_object.markets[trading_pair]['active']):
-                        data = await exchange_object.fetch_ohlcv ( trading_pair , timeframe, since=1516147200000)
+                        data = exchange_object.fetch_ohlcv ( trading_pair , timeframe, since=1516147200000)
 
-                        print ( f"counter_for_{exchange}=" , counter )
+                        # print ( f"counter_for_{exchange}=" , counter )
                         header = ['Timestamp' , 'open' , 'high' , 'low' , 'close' , 'volume']
                         data_df = pd.DataFrame ( data , columns = header ).set_index ( 'Timestamp' )
                         # try:
@@ -387,9 +390,9 @@ async def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,e
                 traceback.print_exc ()
                 continue
             finally:
-                await exchange_object.close ()
+
                 continue
-        await exchange_object.close ()
+
         # connection_to_usdt_trading_pairs_ohlcv.close()
 
     # except Exception as e:
@@ -407,7 +410,7 @@ async def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,e
         #await exchange_object.close ()
 
     finally:
-        await exchange_object.close ()
+
         print("exchange object is closed")
 
 def convert_string_timeframe_into_seconds(timeframe):
@@ -425,7 +428,7 @@ def convert_string_timeframe_into_seconds(timeframe):
     return timeframe_in_seconds
 
 def get_real_time_bitcoin_price():
-    binance = ccxt_not_async.binance()
+    binance = ccxt.binance()
     btc_ticker = binance.fetch_ticker('BTC/USDT')
     last_bitcoin_price=btc_ticker['close']
     return last_bitcoin_price
@@ -471,17 +474,9 @@ def fetch_historical_usdt_pairs_asynchronously(last_bitcoin_price,engine,exchang
     # coroutines = [await get_hisorical_data_from_exchange_for_many_symbols(exchange ) for exchange in  exchanges_list]
     # await asyncio.gather(*coroutines, return_exceptions = True)
     #
-    usdt_trading_pair_number = 0
-    counter = 0
-    global new_counter
-    global list_of_inactive_pairs
-    loop=asyncio.get_event_loop()
-    tasks=[loop.create_task(get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchange,
-                                                                              counter,
-                                                                              engine,timeframe)) for exchange in  exchanges_list]
-
-    loop.run_until_complete(asyncio.wait(tasks))
-    loop.close()
+    for exchange in exchanges_list:
+        get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price, exchange,
+                                                          engine, timeframe)
     #connection_to_usdt_trading_pairs_daily_ohlcv.close()
     # connection_to_usdt_trading_pairs_4h_ohlcv.close ()
     print("list_of_inactive_pairs\n",list_of_inactive_pairs)

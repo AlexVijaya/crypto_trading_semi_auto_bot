@@ -19,7 +19,29 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 
 
+def print_df_to_file(dataframe, subdirectory_name):
+    series = dataframe.squeeze()
+    # get today's date
+    date_today = datetime.datetime.now().strftime("%Y-%m-%d")
 
+    # create file name
+    file_name = f"atr_level_sl_tp_for_cryptos_{date_today}.txt"
+
+    # create directory if it doesn't exist
+    if not os.path.exists(subdirectory_name):
+        os.makedirs(subdirectory_name)
+
+    with open(os.path.join(subdirectory_name, file_name), "a") as file:
+        # print horizontal line
+        file.write("\n"+"+" * 111 + "\n")
+
+        # print series to file
+        file.write(str(series))
+
+        # print horizontal line again
+        file.write("\n" + "+" * 111)
+
+    print(f"Series appended to {file_name} in {subdirectory_name}")
 def find_if_level_is_round(level):
     level = str ( level )
     level_is_round=False
@@ -888,7 +910,7 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                         df_with_level_atr_bpu_bsu_etc = pd.DataFrame ()
                         df_with_level_atr_bpu_bsu_etc.loc[0 , "ticker"] = stock_name
                         df_with_level_atr_bpu_bsu_etc.loc[0 , "exchange"] = exchange
-                        df_with_level_atr_bpu_bsu_etc.loc[0 , "short_name"] = short_name
+                        
                         df_with_level_atr_bpu_bsu_etc.loc[0, "model"] = "ОТБОЙ_от_ATH"
                         df_with_level_atr_bpu_bsu_etc.loc[0 , "ath"] = all_time_high
                         # df_with_level_atr_bpu_bsu_etc.loc[0 , "atr"] = atr
@@ -940,6 +962,9 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                             table_where_ticker_which_had_rebound_situations_from_ath_will_be ,
                             engine_for_db_where_levels_formed_by_rebound_level_will_be ,
                             if_exists = 'append' )
+
+                        print_df_to_file(df_with_level_atr_bpu_bsu_etc,
+                                         'current_rebound_breakout_and_false_breakout')
 
                         # string_for_output = create_string_for_output_to_file_for_stock_rebound_from_ath(stock_name,
                         #                                                                                 all_time_high,

@@ -20,7 +20,29 @@ from sqlalchemy.ext.declarative import declarative_base
 # from yahoo_fin import stock_info
 
 
+def print_df_to_file(dataframe, subdirectory_name):
+    series = dataframe.squeeze()
+    # get today's date
+    date_today = datetime.datetime.now().strftime("%Y-%m-%d")
 
+    # create file name
+    file_name = f"atr_level_sl_tp_for_cryptos_{date_today}.txt"
+
+    # create directory if it doesn't exist
+    if not os.path.exists(subdirectory_name):
+        os.makedirs(subdirectory_name)
+
+    with open(os.path.join(subdirectory_name, file_name), "a") as file:
+        # print horizontal line
+        file.write("\n"+"+" * 111 + "\n")
+
+        # print series to file
+        file.write(str(series))
+
+        # print horizontal line again
+        file.write("\n" + "+" * 111)
+
+    print(f"Series appended to {file_name} in {subdirectory_name}")
 def find_if_level_is_round(level):
     level = str ( level )
     level_is_round=False
@@ -850,7 +872,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                                         df_with_level_atr_bpu_bsu_etc.loc[0 , "exchange"] = exchange
                                                         df_with_level_atr_bpu_bsu_etc.loc[
                                                             0, "model"] = "БЫСТРЫЙ_ПРОБОЙ_ATH"
-                                                        df_with_level_atr_bpu_bsu_etc.loc[0 , "short_name"] = short_name
+                                                        
                                                         df_with_level_atr_bpu_bsu_etc.loc[
                                                             0 , "ath"] = current_ath_in_iteration_over_numpy_array
                                                         df_with_level_atr_bpu_bsu_etc.loc[0 , "advanced_atr"] = advanced_atr
@@ -942,7 +964,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                             df_with_level_atr_bpu_bsu_etc.loc[0 , "exchange"] = exchange
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0, "model"] = "БЫСТРЫЙ_ПРОБОЙ_ATH"
-                                            df_with_level_atr_bpu_bsu_etc.loc[0 , "short_name"] = short_name
+                                            
 
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0 , "ath"] = current_ath_in_iteration_over_numpy_array
@@ -973,6 +995,8 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                                 table_where_ticker_which_may_have_fast_breakout_situations_from_ath_will_be ,
                                                 engine_for_db_where_ticker_which_may_have_fast_breakout_situations ,
                                                 if_exists = 'append' )
+                                            print_df_to_file(df_with_level_atr_bpu_bsu_etc,
+                                                             'current_rebound_breakout_and_false_breakout')
 
 
 
@@ -1112,7 +1136,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             #                                             df_with_level_atr_bpu_bsu_etc = pd.DataFrame ()
             #                                             df_with_level_atr_bpu_bsu_etc.loc[0 , "ticker"] = stock_name
             #                                             df_with_level_atr_bpu_bsu_etc.loc[0 , "exchange"] = exchange
-            #                                             df_with_level_atr_bpu_bsu_etc.loc[0 , "short_name"] = short_name
+            #                                             
             #                                             df_with_level_atr_bpu_bsu_etc.loc[0 , "atl"] = current_atl_in_iteration_over_numpy_array
             #                                             df_with_level_atr_bpu_bsu_etc.loc[0 , "advanced_atr"] = advanced_atr
             #
@@ -1160,7 +1184,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             #                                 df_with_level_atr_bpu_bsu_etc = pd.DataFrame ()
             #                                 df_with_level_atr_bpu_bsu_etc.loc[0 , "ticker"] = stock_name
             #                                 df_with_level_atr_bpu_bsu_etc.loc[0 , "exchange"] = exchange
-            #                                 df_with_level_atr_bpu_bsu_etc.loc[0 , "short_name"] = short_name
+            #                                 
             #                                 df_with_level_atr_bpu_bsu_etc.loc[
             #                                     0 , "atl"] = current_atl_in_iteration_over_numpy_array
             #                                 df_with_level_atr_bpu_bsu_etc.loc[0 , "advanced_atr"] = advanced_atr
