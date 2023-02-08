@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 numpy = "*"
 pandas = "*"
-sqlalchemy = "*"
+sqlalchemy = "==1.4.46"
 ccxt = "*"
 sqlalchemy-utils = "*"
 psycopg2-binary = "*"
@@ -14,6 +14,9 @@ tzlocal = "*"
 imgkit = "*"
 pdfkit = "*"
 plotly = "*"
+wkhtmltopdf = "*"
+pypdf2 = "*"
+pillow = "*"
 
 [dev-packages]
 

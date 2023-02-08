@@ -277,8 +277,8 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                 if string_for_comparison_pair_plus_exchange in list_of_crypto_plus_exchange:
                     print("string_for_comparison_pair_plus_exchange")
                     print(string_for_comparison_pair_plus_exchange)
-                    print("list_of_crypto_plus_exchange")
-                    print(list_of_crypto_plus_exchange)
+                    # print("list_of_crypto_plus_exchange")
+                    # print(list_of_crypto_plus_exchange)
                     table_with_ohlcv_data_df = \
                         pd.read_sql_query(f'''select * from "{string_for_comparison_pair_plus_exchange}"''',
                                           engine)
@@ -288,15 +288,15 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     date_without_time = get_date_without_time_from_timestamp(last_timestamp)
                     number_of_last_index_in_ohlcv_data_df = \
                         get_number_of_last_index(table_with_ohlcv_data_df)
-                    if not ('active' in exchange_object.markets[trading_pair]):
-                        drop_table(string_for_comparison_pair_plus_exchange, engine)
-                        continue
-                    if not (exchange_object.markets[trading_pair]['active']):
-                        drop_table(string_for_comparison_pair_plus_exchange, engine)
-                        continue
+                    # if not ('active' in exchange_object.markets[trading_pair]):
+                    #     drop_table(string_for_comparison_pair_plus_exchange, engine)
+                    #     continue
+                    # if not (exchange_object.markets[trading_pair]['active']):
+                    #     drop_table(string_for_comparison_pair_plus_exchange, engine)
+                    #     continue
                     header = ['Timestamp', 'open', 'high', 'low', 'close', 'volume']
 
-                    data = exchange_object.fetch_ohlcv(trading_pair, timeframe, since=last_timestamp * 1000.0)
+                    data = exchange_object.fetch_ohlcv(trading_pair, timeframe, since=int(last_timestamp * 1000))
                     ohlcv_data_several_last_rows_df = \
                         pd.DataFrame(data, columns=header).set_index('Timestamp')
                     print("ohlcv_data_several_last_rows_df1")
@@ -367,9 +367,12 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     # ohlcv_data_several_last_rows_df = populate_dataframe_with_td_indicator ( ohlcv_data_several_last_rows_df )
 
                     try:
-                        ohlcv_data_several_last_rows_df['open_time_without_date'] = ohlcv_data_several_last_rows_df['open_time'].dt.strftime('%H:%M:%S')
+                        ohlcv_data_several_last_rows_df['open_time'] = pd.to_datetime(
+                            ohlcv_data_several_last_rows_df['open_time'])
+                        ohlcv_data_several_last_rows_df['open_time_without_date'] =\
+                            ohlcv_data_several_last_rows_df['open_time'].dt.strftime('%H:%M:%S')
                     except:
-                        pass
+                        traceback.print_exc()
 
                     ohlcv_data_several_last_rows_df["exchange"] = exchange
                     print("5program got here")
@@ -587,6 +590,14 @@ def fetch_historical_usdt_pairs_asynchronously(last_bitcoin_price,engine,exchang
     # await asyncio.gather(*coroutines, return_exceptions = True)
     #
     for exchange in exchanges_list:
+        '''SELECT 'exchange" 
+            FROM public."ticker_exchange_print_time" 
+            WHERE "next_bar_print_time_utc"='00:00:00' 
+            GROUP BY "exchange";'''
+        list_of_exchanges_where_next_bar_print_utc_time_16=\
+            ["huobipro","huobi","digifinex","bitrue","lbank2","lbank"]
+        if exchange not in list_of_exchanges_where_next_bar_print_utc_time_16:
+            continue
         get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price, exchange,
                                                           engine, timeframe)
     #connection_to_usdt_trading_pairs_daily_ohlcv.close()

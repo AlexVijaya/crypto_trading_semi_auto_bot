@@ -608,6 +608,14 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             # if stock_name!="HERA":
             #     continue
 
+
+            # result=connection_to_ohlcv_data_for_stocks.execute(f'''select * from "{stock_name}"''' )
+            # # create a pandas DataFrame from the result set
+            # table_with_ohlcv_data_df = pd.DataFrame(result.fetchall())
+            #
+            # # set the column names based on the result set's keys
+            # table_with_ohlcv_data_df.columns = result.keys()
+
             table_with_ohlcv_data_df = \
                 pd.read_sql_query ( f'''select * from "{stock_name}"''' ,
                                     engine_for_ohlcv_data_for_stocks )
@@ -982,7 +990,7 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
         except:
             traceback.print_exc()
 
-    string_for_output = f"Список инструментов, которые сформировали модель ОТБОЙ ОТ ИСТОРИЧЕСКОГО МАКСИМУМА:\n" \
+    string_for_output = f"\nСписок инструментов, которые сформировали модель ОТБОЙ ОТ ИСТОРИЧЕСКОГО МАКСИМУМА:\n" \
                         f"{list_with_tickers_ready_for_rebound_off_ath}\n\n"
     # Use the function to create a text file with the text
     # in the subdirectory "current_rebound_breakout_and_false_breakout"

@@ -16,6 +16,7 @@ import ccxt
 # import ccxt.async_support as ccxt  # noqa: E402
 from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database,database_exists
+from pytz import timezone
 
 
 def connect_to_postres_db_with_deleting_it_first(database):
@@ -27,6 +28,7 @@ def connect_to_postres_db_with_deleting_it_first(database):
     port = db_config.port
 
     dummy_database = db_config.dummy_database
+    connection=None
 
     engine = create_engine ( f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}" ,
                              isolation_level = 'AUTOCOMMIT' ,
@@ -41,9 +43,12 @@ def connect_to_postres_db_with_deleting_it_first(database):
         try:
             create_database ( engine.url )
         except:
-            pass
+            traceback.print_exc()
         print ( f'new database created for {engine}' )
-        connection=engine.connect ()
+        try:
+            connection=engine.connect ()
+        except:
+            traceback.print_exc()
         print ( f'Connection to {engine} established after creating new database' )
 
     if database_exists ( engine.url ):
@@ -53,11 +58,11 @@ def connect_to_postres_db_with_deleting_it_first(database):
             engine = create_engine ( f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{dummy_database}" ,
                                      isolation_level = 'AUTOCOMMIT' , echo = False )
         except:
-            pass
+            traceback.print_exc()
         try:
             engine.execute(f'''REVOKE CONNECT ON DATABASE {database} FROM public;''')
         except:
-            pass
+            traceback.print_exc()
         try:
             engine.execute ( f'''
                                 ALTER DATABASE {database} allow_connections = off;
@@ -65,28 +70,52 @@ def connect_to_postres_db_with_deleting_it_first(database):
     
                             ''' )
         except:
-            pass
+            traceback.print_exc()
         try:
             engine.execute ( f'''DROP DATABASE {database};''' )
         except:
-            pass
+            traceback.print_exc()
 
         try:
             engine = create_engine ( f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}" ,
                                      isolation_level = 'AUTOCOMMIT' , echo = False )
         except:
-            pass
+            traceback.print_exc()
         try:
             create_database ( engine.url )
         except:
-            pass
+            traceback.print_exc()
         print ( f'new database created for {engine}' )
 
-    connection = engine.connect ()
+    try:
+        connection = engine.connect ()
+    except:
+        traceback.print_exc()
 
     print ( f'Connection to {engine} established. Database already existed.'
             f' So no new db was created' )
     return engine , connection
+
+def add_time_of_next_candle_print_to_df(data_df):
+    try:
+        # Set the timezone for Moscow
+        moscow_tz = timezone('Europe/Moscow')
+        almaty_tz = timezone('Asia/Almaty')
+        data_df['open_time_datatime_format'] = pd.to_datetime(data_df['open_time'])
+        data_df['open_time_without_date'] = data_df['open_time_datatime_format'].dt.strftime('%H:%M:%S')
+        # Convert the "open_time" column from UTC to Moscow time
+        data_df['open_time_msk'] =\
+            data_df['open_time_datatime_format'].dt.tz_localize('UTC').dt.tz_convert(moscow_tz)
+
+        data_df['open_time_msk_time_only'] = data_df['open_time_msk'].dt.strftime('%H:%M:%S')
+
+        # Convert the "open_time_datatime_format" column from UTC to Almaty time
+        data_df['open_time_almaty'] =  data_df['open_time_msk'].dt.tz_convert('Asia/Almaty')
+
+        # Create a new column called "open_time_almaty_time" that contains the time in string format
+        data_df['open_time_almaty_time_only'] = data_df['open_time_almaty'].dt.strftime('%H:%M:%S')
+    except:
+        traceback.print_exc()
 
 def connect_to_postres_db_and_delete_it_first(database):
     dialect = db_config.dialect
@@ -121,7 +150,7 @@ def connect_to_postres_db_and_delete_it_first(database):
         try:
             engine.execute(f'''REVOKE CONNECT ON DATABASE {database} FROM public;''')
         except:
-            pass
+            traceback.print_exc()
         try:
             engine.execute ( f'''
                                 ALTER DATABASE {database} allow_connections = off;
@@ -129,11 +158,11 @@ def connect_to_postres_db_and_delete_it_first(database):
     
                             ''' )
         except:
-            pass
+            traceback.print_exc()
         try:
             engine.execute ( f'''DROP DATABASE {database};''' )
         except:
-            pass
+            traceback.print_exc()
 
         engine = create_engine ( f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}" ,
                                  isolation_level = 'AUTOCOMMIT' , echo = False )
@@ -186,7 +215,7 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
         exchange_object = getattr ( ccxt , exchange ) ()
         exchange_object.enableRateLimit = True
     except:
-        pass
+        traceback.print_exc()
 
     try:
         # connection_to_usdt_trading_pairs_ohlcv = \
@@ -222,138 +251,156 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     # print ( f"list_of_trading_pairs_with_USDT_on_{exchange}\n" ,
                     #         list_of_trading_pairs_with_USDT )
 
-                    if ('active' in exchange_object.markets[trading_pair]) or (exchange_object.markets[trading_pair]['active']):
-                        data = exchange_object.fetch_ohlcv ( trading_pair , timeframe, since=1516147200000)
+                    # if ('active' in exchange_object.markets[trading_pair]) or (exchange_object.markets[trading_pair]['active']):
+                    data = exchange_object.fetch_ohlcv ( trading_pair , timeframe, since=1516147200000)
 
-                        # print ( f"counter_for_{exchange}=" , counter )
-                        header = ['Timestamp' , 'open' , 'high' , 'low' , 'close' , 'volume']
-                        data_df = pd.DataFrame ( data , columns = header ).set_index ( 'Timestamp' )
-                        # try:
-                        #     data_4h = await exchange_object.fetch_ohlcv ( trading_pair , '1d' )
-                        #
-                        #     data_df_4h = pd.DataFrame ( data_4h , columns = header ).set_index ( 'Timestamp' )
-                        #     print(f"data_df_4h_for_{trading_pair} on exchange {exchange}\n",
-                        #           data_df_4h)
-                        #     data_df_4h['open_time'] = \
-                        #         [dt.datetime.fromtimestamp ( x / 1000.0 ) for x in data_df_4h.index]
-                        #     data_df_4h.set_index ( 'open_time' )
-                        #     # print ( "list_of_dates=\n" , list_of_dates )
-                        #     # time.sleep(5)
-                        #     data_df_4h['psar'] = talib.SAR ( data_df_4h.high ,
-                        #                                   data_df_4h.low ,
-                        #                                   acceleration = 0.02 ,
-                        #                                   maximum = 0.2 )
-                        #     print ( "data_df_4h\n" , data_df_4h )
-                        #
-                        #     data_df_4h.to_sql ( f"{trading_pair}_on_{exchange}" ,
-                        #                      connection_to_usdt_trading_pairs_4h_ohlcv ,
-                        #                      if_exists = 'replace' )
-                        #
-                        #
-                        # except Exception as e:
-                        #     print("something is wrong with 4h timeframe"
-                        #           f"for {trading_pair} on exchange {exchange}\n",e)
-                        print ( "=" * 80 )
-                        print ( f'ohlcv for {trading_pair} on exchange {exchange}\n' )
-                        print ( data_df )
+                    # print ( f"counter_for_{exchange}=" , counter )
+                    header = ['Timestamp' , 'open' , 'high' , 'low' , 'close' , 'volume']
+                    data_df = pd.DataFrame ( data , columns = header ).set_index ( 'Timestamp' )
+                    # try:
+                    #     data_4h = await exchange_object.fetch_ohlcv ( trading_pair , '1d' )
+                    #
+                    #     data_df_4h = pd.DataFrame ( data_4h , columns = header ).set_index ( 'Timestamp' )
+                    #     print(f"data_df_4h_for_{trading_pair} on exchange {exchange}\n",
+                    #           data_df_4h)
+                    #     data_df_4h['open_time'] = \
+                    #         [dt.datetime.fromtimestamp ( x / 1000.0 ) for x in data_df_4h.index]
+                    #     data_df_4h.set_index ( 'open_time' )
+                    #     # print ( "list_of_dates=\n" , list_of_dates )
+                    #     # time.sleep(5)
+                    #     data_df_4h['psar'] = talib.SAR ( data_df_4h.high ,
+                    #                                   data_df_4h.low ,
+                    #                                   acceleration = 0.02 ,
+                    #                                   maximum = 0.2 )
+                    #     print ( "data_df_4h\n" , data_df_4h )
+                    #
+                    #     data_df_4h.to_sql ( f"{trading_pair}_on_{exchange}" ,
+                    #                      connection_to_usdt_trading_pairs_4h_ohlcv ,
+                    #                      if_exists = 'replace' )
+                    #
+                    #
+                    # except Exception as e:
+                    #     print("something is wrong with 4h timeframe"
+                    #           f"for {trading_pair} on exchange {exchange}\n",e)
+                    print ( "=" * 80 )
+                    print ( f'ohlcv for {trading_pair} on exchange {exchange}\n' )
+                    print ( data_df )
 
-                        trading_pair=trading_pair.replace("/","_")
+                    trading_pair=trading_pair.replace("/","_")
 
-                        data_df['ticker'] = trading_pair
-                        data_df['exchange'] = exchange
-
-
-                        #если  в крипе мало данных , то ее не добавляем
-                        if len(data_df)<10:
-                            continue
-
-                        # slice last 30 days for volume calculation
-                        min_volume_over_these_many_last_days=30
-                        data_df_n_days_slice=data_df.iloc[:-1].tail(min_volume_over_these_many_last_days).copy()
-                        data_df_n_days_slice["volume_by_close"]=\
-                            data_df_n_days_slice["volume"]*data_df_n_days_slice["close"]
-                        print("data_df_n_days_slice")
-                        print(data_df_n_days_slice)
-                        min_volume_over_last_n_days_in_dollars=min(data_df_n_days_slice["volume_by_close"])
-                        print("min_volume_over_last_n_days_in_dollars")
-                        print(min_volume_over_last_n_days_in_dollars)
-                        if min_volume_over_last_n_days_in_dollars<2*last_bitcoin_price:
-                            continue
+                    data_df['ticker'] = trading_pair
+                    data_df['exchange'] = exchange
 
 
+                    #если  в крипе мало данных , то ее не добавляем
+                    if len(data_df)<10:
+                        continue
+
+                    # slice last 30 days for volume calculation
+                    min_volume_over_these_many_last_days=30
+                    data_df_n_days_slice=data_df.iloc[:-1].tail(min_volume_over_these_many_last_days).copy()
+                    data_df_n_days_slice["volume_by_close"]=\
+                        data_df_n_days_slice["volume"]*data_df_n_days_slice["close"]
+                    print("data_df_n_days_slice")
+                    print(data_df_n_days_slice)
+                    min_volume_over_last_n_days_in_dollars=min(data_df_n_days_slice["volume_by_close"])
+                    print("min_volume_over_last_n_days_in_dollars")
+                    print(min_volume_over_last_n_days_in_dollars)
+
+                    #проверить, что объем за последние n дней не меньше, чем 2 цены биткойна
+                    if min_volume_over_last_n_days_in_dollars<2*last_bitcoin_price:
+                        continue
 
 
+                    current_timestamp=time.time()
+                    last_timestamp_in_df=data_df.tail(1).index.item()/1000.0
+                    print("current_timestamp=",current_timestamp)
+                    print("data_df.tail(1).index.item()=",data_df.tail(1).index.item()/1000.0)
+
+                    #check if the pair is active
+                    timeframe_in_seconds=convert_string_timeframe_into_seconds(timeframe)
+                    if not abs(current_timestamp-last_timestamp_in_df)<(timeframe_in_seconds):
+                        print(f"not quite active trading pair {trading_pair} on {exchange}")
+                        not_active_pair_counter=not_active_pair_counter+1
+                        print("not_active_pair_counter=",not_active_pair_counter)
+                        list_of_inactive_pairs.append(f"{trading_pair}_on_{exchange}")
+                        continue
+                    print("1program got here")
+                    # try:
+                    #     data_df['Timestamp'] = \
+                    #         [datetime.datetime.timestamp(float(x)) for x in data_df.index]
+                    #
+                    # except Exception as e:
+                    #     print("error_message")
+                    #     traceback.print_exc()
+                    #     time.sleep(3000000)
+                    data_df["Timestamp"] = (data_df.index)
+
+                    try:
+                        data_df["open_time"] = data_df["Timestamp"].apply(lambda x: pd.to_datetime(x, unit='ms').strftime('%Y-%m-%d %H:%M:%S'))
+                    except Exception as e:
+                        print("error_message")
+                        traceback.print_exc()
+
+                    data_df['Timestamp'] = data_df["Timestamp"] / 1000.0
+                        # time.sleep(3000000)
+                    print("2program got here")
+                    # data_df["open_time"] = data_df.index
+                    print("3program got here")
+                    data_df.index = range(0, len(data_df))
+                    print("4program got here")
+                    # data_df = populate_dataframe_with_td_indicator ( data_df )
+
+                    data_df["exchange"] = exchange
+                    print("5program got here")
+                    data_df["short_name"] = np.nan
+                    print("6program got here")
+                    data_df["country"] = np.nan
+                    data_df["long_name"] = np.nan
+                    data_df["sector"] = np.nan
+                    # data_df["long_business_summary"] = long_business_summary
+                    data_df["website"] = np.nan
+                    data_df["quote_type"] = np.nan
+                    data_df["city"] = np.nan
+                    data_df["exchange_timezone_name"] = np.nan
+                    data_df["industry"] = np.nan
+                    data_df["market_cap"] = np.nan
+
+                    data_df.set_index("open_time")
+                    # try:
+                    #     # Set the timezone for Moscow
+                    #     moscow_tz = timezone('Europe/Moscow')
+                    #     almaty_tz = timezone('Asia/Almaty')
+                    #     data_df['open_time_datatime_format'] = pd.to_datetime(data_df['open_time'])
+                    #     data_df['open_time_without_date'] = data_df['open_time_datatime_format'].dt.strftime('%H:%M:%S')
+                    #     # Convert the "open_time" column from UTC to Moscow time
+                    #     data_df['open_time_msk'] =\
+                    #         data_df['open_time_datatime_format'].dt.tz_localize('UTC').dt.tz_convert(moscow_tz)
+                    #
+                    #     data_df['open_time_msk_time_only'] = data_df['open_time_msk'].dt.strftime('%H:%M:%S')
+                    #
+                    #     # Convert the "open_time_datatime_format" column from UTC to Almaty time
+                    #     data_df['open_time_almaty'] =  data_df['open_time_msk'].dt.tz_convert('Asia/Almaty')
+                    #
+                    #     # Create a new column called "open_time_almaty_time" that contains the time in string format
+                    #     data_df['open_time_almaty_time_only'] = data_df['open_time_almaty'].dt.strftime('%H:%M:%S')
+                    # except:
+                    #     traceback.print_exc()
+                    add_time_of_next_candle_print_to_df(data_df)
+                    print("2program got here")
+                    trading_pair_has_stablecoin_as_first_part=\
+                        check_if_stable_coin_is_the_first_part_of_ticker(trading_pair)
+
+                    # if "BUSD/" in trading_pair:
+                    #     time.sleep(3000000)
+                    if trading_pair_has_stablecoin_as_first_part:
+                        print(f"discarded pair due to stable coin being the first part is {trading_pair}")
+                        continue
 
 
-                        current_timestamp=time.time()
-                        last_timestamp_in_df=data_df.tail(1).index.item()/1000.0
-                        print("current_timestamp=",current_timestamp)
-                        print("data_df.tail(1).index.item()=",data_df.tail(1).index.item()/1000.0)
-
-                        #check if the pair is active
-                        timeframe_in_seconds=convert_string_timeframe_into_seconds(timeframe)
-                        if not abs(current_timestamp-last_timestamp_in_df)<(timeframe_in_seconds):
-                            print(f"not quite active trading pair {trading_pair} on {exchange}")
-                            not_active_pair_counter=not_active_pair_counter+1
-                            print("not_active_pair_counter=",not_active_pair_counter)
-                            list_of_inactive_pairs.append(f"{trading_pair}_on_{exchange}")
-                            continue
-                        print("1program got here")
-                        # try:
-                        #     data_df['Timestamp'] = \
-                        #         [datetime.datetime.timestamp(float(x)) for x in data_df.index]
-                        #
-                        # except Exception as e:
-                        #     print("error_message")
-                        #     traceback.print_exc()
-                        #     time.sleep(3000000)
-                        data_df["Timestamp"] = (data_df.index)
-
-                        try:
-                            data_df["open_time"] = data_df["Timestamp"].apply(lambda x: pd.to_datetime(x, unit='ms').strftime('%Y-%m-%d %H:%M:%S'))
-                        except Exception as e:
-                            print("error_message")
-                            traceback.print_exc()
-
-                        data_df['Timestamp'] = data_df["Timestamp"] / 1000.0
-                            # time.sleep(3000000)
-                        print("2program got here")
-                        # data_df["open_time"] = data_df.index
-                        print("3program got here")
-                        data_df.index = range(0, len(data_df))
-                        print("4program got here")
-                        # data_df = populate_dataframe_with_td_indicator ( data_df )
-
-                        data_df["exchange"] = exchange
-                        print("5program got here")
-                        data_df["short_name"] = np.nan
-                        print("6program got here")
-                        data_df["country"] = np.nan
-                        data_df["long_name"] = np.nan
-                        data_df["sector"] = np.nan
-                        # data_df["long_business_summary"] = long_business_summary
-                        data_df["website"] = np.nan
-                        data_df["quote_type"] = np.nan
-                        data_df["city"] = np.nan
-                        data_df["exchange_timezone_name"] = np.nan
-                        data_df["industry"] = np.nan
-                        data_df["market_cap"] = np.nan
-
-                        data_df.set_index("open_time")
-                        print("2program got here")
-                        trading_pair_has_stablecoin_as_first_part=\
-                            check_if_stable_coin_is_the_first_part_of_ticker(trading_pair)
-
-                        # if "BUSD/" in trading_pair:
-                        #     time.sleep(3000000)
-                        if trading_pair_has_stablecoin_as_first_part:
-                            print(f"discarded pair due to stable coin being the first part is {trading_pair}")
-                            continue
-
-
-                        data_df.to_sql ( f"{trading_pair}_on_{exchange}" ,
-                                         engine ,
-                                         if_exists = 'replace' )
+                    data_df.to_sql ( f"{trading_pair}_on_{exchange}" ,
+                                     engine ,
+                                     if_exists = 'replace' )
 
 
 
@@ -399,7 +446,7 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
     #     print ( f"found {e} error outer" )
     #     traceback.print_exc ()
     #
-    #     pass
+    #     traceback.print_exc()
 
 
 
