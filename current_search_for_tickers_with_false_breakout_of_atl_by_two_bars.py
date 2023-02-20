@@ -18,6 +18,47 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 
+def insert_sl_tp_order_price_into_df(last_two_years_of_data,
+                                     df_with_level_atr_bpu_bsu_etc,
+                                     all_time_low,advanced_atr,
+                                     low_of_false_breakout_bar,
+                                     low_of_next_day_bar_after_break_out_bar):
+    buy_order = all_time_low + (advanced_atr * 0.5)
+    technical_stop_loss = min(low_of_false_breakout_bar, low_of_next_day_bar_after_break_out_bar) - (
+                0.05 * advanced_atr)
+    distance_between_technical_stop_loss_and_buy_order = buy_order - technical_stop_loss
+    take_profit_when_stop_loss_is_technical_3_to_1 = buy_order + (buy_order - technical_stop_loss) * 3
+    take_profit_when_stop_loss_is_technical_4_to_1 = buy_order + (buy_order - technical_stop_loss) * 4
+    distance_between_technical_stop_loss_and_buy_order_in_atr = \
+        distance_between_technical_stop_loss_and_buy_order / advanced_atr
+    # round technical stop loss and take profit for ease of looking at
+    buy_order = round(buy_order, 3)
+    technical_stop_loss = round(technical_stop_loss, 3)
+    take_profit_when_stop_loss_is_technical_3_to_1 = \
+        round(take_profit_when_stop_loss_is_technical_3_to_1, 3)
+    take_profit_when_stop_loss_is_technical_4_to_1 = \
+        round(take_profit_when_stop_loss_is_technical_4_to_1, 3)
+
+    distance_between_technical_stop_loss_and_buy_order_in_atr = \
+        round(distance_between_technical_stop_loss_and_buy_order_in_atr, 3)
+
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "min_volume_over_last_n_days"] = last_two_years_of_data['volume'].tail(
+        count_min_volume_over_this_many_days).min()
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "count_min_volume_over_this_many_days"] = count_min_volume_over_this_many_days
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "buy_order"] = buy_order
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "technical_stop_loss"] = technical_stop_loss
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "take_profit_3_to_1"] = take_profit_when_stop_loss_is_technical_3_to_1
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "take_profit_4_to_1"] = take_profit_when_stop_loss_is_technical_4_to_1
+    df_with_level_atr_bpu_bsu_etc.loc[
+        0, "distance_between_technical_stop_loss_and_buy_order_in_atr"] = distance_between_technical_stop_loss_and_buy_order_in_atr
+    return df_with_level_atr_bpu_bsu_etc
+
 def print_df_to_file(dataframe, subdirectory_name):
     series = dataframe.squeeze()
     # get today's date

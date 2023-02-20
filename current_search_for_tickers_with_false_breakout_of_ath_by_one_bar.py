@@ -692,8 +692,11 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             # print(list(table_with_ohlcv_data_df.columns))
 
             exchange = table_with_ohlcv_data_df.loc[0 , "exchange"]
-            short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
 
+            try:
+                short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
+            except:
+                pass
 
             # Select last 365*2 rows (last two years) of data
             last_two_years_of_data = table_with_ohlcv_data_df.tail(365 * 2)
@@ -758,7 +761,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             if last_two_years_of_data.tail(30)['volume'].min() < 750:
                 continue
 
-            if close_of_false_breakout_bar < 1 and last_two_years_of_data.tail(30)['volume'].min() < 100000:
+            if close_of_false_breakout_bar < 1 and last_two_years_of_data.tail(30)['volume'].min() < 100:
                 continue
 
 
@@ -865,9 +868,11 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
 
             date_and_time_of_last_ath, date_of_last_ath = get_date_with_and_without_time_from_timestamp(
                 all_time_high_timestamps[-1])
-            date_and_time_of_pre_false_breakout_bar, date_of_pre_false_breakout_bar = get_date_with_and_without_time_from_timestamp(
+            date_and_time_of_pre_false_breakout_bar, date_of_pre_false_breakout_bar =\
+                get_date_with_and_without_time_from_timestamp(
                 timestamp_of_pre_false_breakout_bar)
-            date_and_time_of_false_breakout_bar, date_of_false_breakout_bar = get_date_with_and_without_time_from_timestamp(
+            date_and_time_of_false_breakout_bar, date_of_false_breakout_bar =\
+                get_date_with_and_without_time_from_timestamp(
                 timestamp_of_false_breakout_bar)
 
 
@@ -888,7 +893,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             take_profit_when_stop_loss_is_technical_3_to_1 = \
                 round(take_profit_when_stop_loss_is_technical_3_to_1, 3)
             take_profit_when_stop_loss_is_technical_4_to_1 = \
-                round(take_profit_when_stop_loss_is_technical_3_to_1, 3)
+                round(take_profit_when_stop_loss_is_technical_4_to_1, 3)
             distance_between_technical_stop_loss_and_sell_order_in_atr = \
                 round(distance_between_technical_stop_loss_and_sell_order_in_atr, 3)
             sell_order = round(sell_order, 3)
