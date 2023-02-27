@@ -753,23 +753,23 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                     if atr>0:
                         backlash = abs ( true_low_of_bpu2 - all_time_low )
                         if (backlash <= atr * acceptable_backlash) and ( low_of_bpu2 - all_time_low )>=0:
-                            stop_loss = all_time_low - (advanced_atr * 0.05)
+                            calculated_stop_loss = all_time_low - (advanced_atr * 0.05)
                             calculated_backlash_from_advanced_atr = advanced_atr * 0.05
                             buy_order = all_time_low + (advanced_atr * 0.5)
                             take_profit_3_to_1 = buy_order + (advanced_atr * 0.5) * 3
                             take_profit_4_to_1 = buy_order + (advanced_atr * 0.5) * 4
 
-                            distance_between_technical_stop_loss_and_buy_order = buy_order - stop_loss
-                            distance_between_technical_stop_loss_and_buy_order_in_atr=\
-                                distance_between_technical_stop_loss_and_buy_order/advanced_atr
+                            distance_between_calculated_stop_loss_and_buy_order = buy_order - calculated_stop_loss
+                            distance_between_calculated_stop_loss_and_buy_order_in_atr=\
+                                distance_between_calculated_stop_loss_and_buy_order/advanced_atr
 
-                            stop_loss = round(stop_loss, 3)
+                            calculated_stop_loss = round(calculated_stop_loss, 3)
                             calculated_backlash_from_advanced_atr = round(calculated_backlash_from_advanced_atr, 3)
                             buy_order = round(buy_order, 3)
                             take_profit_3_to_1 = round(take_profit_3_to_1, 3)
                             take_profit_4_to_1 = round(take_profit_4_to_1, 3)
-                            # distance_between_technical_stop_loss_and_buy_order_in_atr =\
-                            #     round(distance_between_technical_stop_loss_and_buy_order_in_atr, 3)
+                            # distance_between_calculated_stop_loss_and_buy_order_in_atr =\
+                            #     round(distance_between_calculated_stop_loss_and_buy_order_in_atr, 3)
 
                             advanced_atr = round(advanced_atr, 3)
                             low_of_bsu = round(low_of_bsu, 3)
@@ -811,16 +811,16 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                             df_with_level_atr_bpu_bsu_etc.loc[0 , "human_time_of_bpu1"] = timestamp_of_bpu1_with_time
                             df_with_level_atr_bpu_bsu_etc.loc[0 , "human_time_of_bpu2"] = timestamp_of_bpu2_with_time
 
-                            df_with_level_atr_bpu_bsu_etc.loc[0, "stop_loss"] = stop_loss
+                            df_with_level_atr_bpu_bsu_etc.loc[0, "calculated_stop_loss"] = calculated_stop_loss
                             df_with_level_atr_bpu_bsu_etc.loc[0, "buy_order"] = buy_order
                             df_with_level_atr_bpu_bsu_etc.loc[
                                 0, "приемлемый_люфт"] = calculated_backlash_from_advanced_atr
                             df_with_level_atr_bpu_bsu_etc.loc[0, "take_profit_3_to_1"] = take_profit_3_to_1
                             df_with_level_atr_bpu_bsu_etc.loc[0, "take_profit_4_to_1"] = take_profit_4_to_1
-                            df_with_level_atr_bpu_bsu_etc.loc[0, "distance_between_technical_stop_loss_and_buy_order"] =\
-                                distance_between_technical_stop_loss_and_buy_order
-                            df_with_level_atr_bpu_bsu_etc.loc[0, "distance_between_technical_stop_loss_and_buy_order_in_atr"] = \
-                                distance_between_technical_stop_loss_and_buy_order_in_atr
+                            df_with_level_atr_bpu_bsu_etc.loc[0, "distance_between_calculated_stop_loss_and_buy_order"] =\
+                                distance_between_calculated_stop_loss_and_buy_order
+                            df_with_level_atr_bpu_bsu_etc.loc[0, "distance_between_calculated_stop_loss_and_buy_order_in_atr"] = \
+                                distance_between_calculated_stop_loss_and_buy_order_in_atr
 
                             df_with_level_atr_bpu_bsu_etc.loc[
                                 0, "calculated_backlash_from_advanced_atr"] = \
