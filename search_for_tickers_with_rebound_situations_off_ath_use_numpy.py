@@ -18,7 +18,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 
-
+def count_zeros(number):
+    number_str = str(number) # convert the number to a string
+    count = 0
+    for digit in number_str:
+        if digit == '0':
+            count += 1
+        elif digit == '.':
+            continue # stop counting zeros at the decimal point
+        else:
+            break # skip non-zero digits
+    return count
 def unix_timestamp_to_human_date_time(timestamp):
     return dt.datetime.fromtimestamp(timestamp).strftime('%Y/%m/%d_%H:%M:%S_%A %Z')
 
@@ -934,36 +944,37 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             # truncate high and low to two decimal number
 
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
 
             initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
             truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply(trunc, args=(6,))
+                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
 
             # print('table_with_ohlcv_data_df.loc[0,"close"]')
             # print ( table_with_ohlcv_data_df.loc[0 , "close"] )
 
+            last_close_price = get_last_close_price_of_asset(table_with_ohlcv_data_df)
+            number_of_zeroes_in_price = count_zeros(last_close_price)
+
             # round high and low to two decimal number
-
             truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(round, args=(4,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(number_of_zeroes_in_price + 2,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(round, args=(4,))
-
+                table_with_ohlcv_data_df["low"].apply(round, args=(number_of_zeroes_in_price + 2,))
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )
             #####################
@@ -1036,481 +1047,264 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                     current_timestamp = first_several_rows_in_np_array_slice[-1][0]
 
                     current_close = first_several_rows_in_np_array_slice[-1][4]
-                    if volume_in_current_ath >= 750:
-                        last_n_rows_for_volume_check = first_several_rows_in_np_array_slice[
-                                                       -number_of_bars_in_suppression_to_check_for_volume_acceptance:,
-                                                       5]
-                        min_volume_over_last_n_days = find_min_volume_over_last_n_days(last_n_rows_for_volume_check)
-                        if min_volume_over_last_n_days >= 750:
 
-                            if current_high <= current_ath_in_iteration_over_numpy_array:
-                                if number_of_last_row_in_np_array_row_slice > row_of_last_ath_which_is_limit_level_also + \
-                                        number_of_days_between_bsu_and_bpu1:
-                                    advanced_atr = calculate_atr_without_paranormal_bars_from_numpy_array(
-                                        advanced_atr_over_this_period,
-                                        first_several_rows_in_np_array_slice,
-                                        number_of_last_row_in_np_array_row_slice)
-                                    advanced_atr = round(advanced_atr, 6)
+                    last_n_rows_for_volume_check = first_several_rows_in_np_array_slice[
+                                                   -number_of_bars_in_suppression_to_check_for_volume_acceptance:,
+                                                   5]
+                    min_volume_over_last_n_days = find_min_volume_over_last_n_days(last_n_rows_for_volume_check)
+                    if min_volume_over_last_n_days >= 750:
 
-                                    if advanced_atr==0:
-                                        continue
-                                    # проверить что поджатие на маленьких барах
-                                    # try:
-                                    #
-                                    #     prev_high = first_several_rows_in_np_array_slice[-2][2]
-                                    #     prev_low = first_several_rows_in_np_array_slice[-2][3]
-                                    #     prev_prev_high = first_several_rows_in_np_array_slice[-3][2]
-                                    #     prev_prev_low = first_several_rows_in_np_array_slice[-3][3]
-                                    #     current_true_range = current_high - current_low
-                                    #     prev_true_range = prev_high - prev_low
-                                    #     prev_prev_true_range=prev_prev_high-prev_prev_low
-                                    #     if current_true_range>factor_to_multiply_atr_by_to_check_suppression*advanced_atr or\
-                                    #             prev_true_range>factor_to_multiply_atr_by_to_check_suppression*advanced_atr or\
-                                    #             prev_prev_true_range>factor_to_multiply_atr_by_to_check_suppression*advanced_atr:
-                                    #         continue
-                                    # except:
-                                    #     pass
+                        if current_high <= current_ath_in_iteration_over_numpy_array:
+                            if number_of_last_row_in_np_array_row_slice > row_of_last_ath_which_is_limit_level_also + \
+                                    number_of_days_between_bsu_and_bpu1:
+                                advanced_atr = calculate_atr_without_paranormal_bars_from_numpy_array(
+                                    advanced_atr_over_this_period,
+                                    first_several_rows_in_np_array_slice,
+                                    number_of_last_row_in_np_array_row_slice)
+                                advanced_atr = round(advanced_atr, 20)
 
-                                    # print(f"advanced_atr_for_row={number_of_last_row_in_np_array_row_slice}")
-                                    # print ( advanced_atr )
-                                    # distance_between_current_ath_and_current_close=\
-                                    #     current_ath_in_iteration_over_numpy_array-current_close
-                                    # if distance_between_current_ath_and_current_close>advanced_atr*0.05 and distance_between_current_ath_and_current_close<advanced_atr*0.1:
-                                    #     date_and_time_of_approaching_to_ath , date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp (
-                                    #        first_several_rows_in_np_array_slice[-1][0] )
+                                if advanced_atr==0:
+                                    continue
+                                # проверить что поджатие на маленьких барах
+                                # try:
+                                #
+                                #     prev_high = first_several_rows_in_np_array_slice[-2][2]
+                                #     prev_low = first_several_rows_in_np_array_slice[-2][3]
+                                #     prev_prev_high = first_several_rows_in_np_array_slice[-3][2]
+                                #     prev_prev_low = first_several_rows_in_np_array_slice[-3][3]
+                                #     current_true_range = current_high - current_low
+                                #     prev_true_range = prev_high - prev_low
+                                #     prev_prev_true_range=prev_prev_high-prev_prev_low
+                                #     if current_true_range>factor_to_multiply_atr_by_to_check_suppression*advanced_atr or\
+                                #             prev_true_range>factor_to_multiply_atr_by_to_check_suppression*advanced_atr or\
+                                #             prev_prev_true_range>factor_to_multiply_atr_by_to_check_suppression*advanced_atr:
+                                #         continue
+                                # except:
+                                #     pass
 
-                                    # list_of_stocks_approaching_ath.append(stock_name)
-                                    # number_of_bars_which_fulfil_suppression_to_ath = \
-                                    #     calculate_number_of_bars_which_fulfil_suppression_criterion_to_ath (
-                                    #         first_several_rows_in_np_array_slice ,
-                                    #         number_of_last_row_in_np_array_row_slice )
-                                    # print(f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}")
+                                # print(f"advanced_atr_for_row={number_of_last_row_in_np_array_row_slice}")
+                                # print ( advanced_atr )
+                                # distance_between_current_ath_and_current_close=\
+                                #     current_ath_in_iteration_over_numpy_array-current_close
+                                # if distance_between_current_ath_and_current_close>advanced_atr*0.05 and distance_between_current_ath_and_current_close<advanced_atr*0.1:
+                                #     date_and_time_of_approaching_to_ath , date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp (
+                                #        first_several_rows_in_np_array_slice[-1][0] )
 
-                                    # #check how many bars form suppression
-                                    # if number_of_bars_which_fulfil_suppression_to_ath >= 3:
+                                # list_of_stocks_approaching_ath.append(stock_name)
+                                # number_of_bars_which_fulfil_suppression_to_ath = \
+                                #     calculate_number_of_bars_which_fulfil_suppression_criterion_to_ath (
+                                #         first_several_rows_in_np_array_slice ,
+                                #         number_of_last_row_in_np_array_row_slice )
+                                # print(f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}")
+
+                                # #check how many bars form suppression
+                                # if number_of_bars_which_fulfil_suppression_to_ath >= 3:
+
+                                try:
+                                    open_of_bpu1 = np.nan
+                                    close_of_bpu1 = np.nan
+                                    low_of_bpu1 = np.nan
+                                    high_of_bpu1 = np.nan
+                                    volume_of_bpu1 = np.nan
+
+                                    open_of_bpu2 = np.nan
+                                    close_of_bpu2 = np.nan
+                                    low_of_bpu2 = np.nan
+                                    high_of_bpu2 = np.nan
+                                    volume_of_bpu2 = np.nan
+
+                                    open_of_bar_next_day_after_bpu2 = np.nan
+
+                                    # get ohlcv for the first false breakout bar
+                                    try:
+                                        open_of_bpu1 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice][1]
+                                    except:
+                                        pass
 
                                     try:
-                                        open_of_bpu1 = np.nan
-                                        close_of_bpu1 = np.nan
-                                        low_of_bpu1 = np.nan
-                                        high_of_bpu1 = np.nan
-                                        volume_of_bpu1 = np.nan
-
-                                        open_of_bpu2 = np.nan
-                                        close_of_bpu2 = np.nan
-                                        low_of_bpu2 = np.nan
-                                        high_of_bpu2 = np.nan
-                                        volume_of_bpu2 = np.nan
-
-                                        open_of_bar_next_day_after_bpu2 = np.nan
-
-                                        # get ohlcv for the first false breakout bar
-                                        try:
-                                            open_of_bpu1 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice][1]
-                                        except:
-                                            pass
-
-                                        try:
-                                            high_of_bpu1 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice][2]
-                                        except:
-                                            pass
-
-                                        try:
-                                            low_of_bpu1 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice][3]
-                                        except:
-                                            pass
-
-                                        try:
-                                            close_of_bpu1 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice][4]
-                                        except:
-                                            pass
-
-                                        try:
-                                            volume_of_bpu1 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice][5]
-                                        except:
-                                            pass
-
-                                        # check the main condition for false breakout. High higher than ath
-                                        if high_of_bpu1 == current_ath_in_iteration_over_numpy_array:
-                                            continue
-
-                                        # get ohlcv for the second false breakout bar
-                                        try:
-                                            open_of_bpu2 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice + 1][1]
-                                        except:
-                                            pass
-
-                                        try:
-                                            high_of_bpu2 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice + 1][2]
-                                        except:
-                                            pass
-
-                                        try:
-                                            low_of_bpu2 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice + 1][3]
-                                        except:
-                                            pass
-
-                                        try:
-                                            close_of_bpu2 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice + 1][4]
-                                        except:
-                                            pass
-
-                                        try:
-                                            volume_of_bpu2 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice + 1][5]
-                                        except:
-                                            pass
-
-                                        # check the main condition for second false breakout. High higher than ath
-                                        if high_of_bpu2 >  current_ath_in_iteration_over_numpy_array:
-                                            continue
-
-                                        try:
-                                            open_of_bar_next_day_after_bpu2 = \
-                                                table_with_ohlcv_data_df_slice_numpy_array[
-                                                    number_of_last_row_in_np_array_row_slice + 2][1]
-                                        except:
-                                            pass
-
-                                        # get ohlcv of bar before first false breakout
-                                        open_of_bar_before_false_breakout = \
+                                        high_of_bpu1 = \
                                             table_with_ohlcv_data_df_slice_numpy_array[
-                                                number_of_last_row_in_np_array_row_slice - 1][1]
+                                                number_of_last_row_in_np_array_row_slice][2]
+                                    except:
+                                        pass
 
-                                        close_of_bar_before_false_breakout = \
+                                    try:
+                                        low_of_bpu1 = \
                                             table_with_ohlcv_data_df_slice_numpy_array[
-                                                number_of_last_row_in_np_array_row_slice - 1][4]
+                                                number_of_last_row_in_np_array_row_slice][3]
+                                    except:
+                                        pass
 
-                                        high_of_bar_before_false_breakout = \
+                                    try:
+                                        close_of_bpu1 = \
                                             table_with_ohlcv_data_df_slice_numpy_array[
-                                                number_of_last_row_in_np_array_row_slice - 1][2]
+                                                number_of_last_row_in_np_array_row_slice][4]
+                                    except:
+                                        pass
 
-                                        low_of_bar_before_false_breakout = \
+                                    try:
+                                        volume_of_bpu1 = \
                                             table_with_ohlcv_data_df_slice_numpy_array[
-                                                number_of_last_row_in_np_array_row_slice - 1][3]
+                                                number_of_last_row_in_np_array_row_slice][5]
+                                    except:
+                                        pass
 
-                                        volume_of_bar_before_false_breakout = \
+                                    # check the main condition for false breakout. High higher than ath
+                                    if high_of_bpu1 != current_ath_in_iteration_over_numpy_array:
+                                        continue
+
+                                    # get ohlcv for the second false breakout bar
+                                    try:
+                                        open_of_bpu2 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice + 1][1]
+                                    except:
+                                        pass
+
+                                    try:
+                                        high_of_bpu2 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice + 1][2]
+                                    except:
+                                        pass
+
+                                    try:
+                                        low_of_bpu2 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice + 1][3]
+                                    except:
+                                        pass
+
+                                    try:
+                                        close_of_bpu2 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice + 1][4]
+                                    except:
+                                        pass
+
+                                    try:
+                                        volume_of_bpu2 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice + 1][5]
+                                    except:
+                                        pass
+
+                                    # check the main condition for second false breakout. High higher than ath
+                                    if high_of_bpu2 > current_ath_in_iteration_over_numpy_array:
+                                        continue
+
+                                    try:
+                                        open_of_bar_next_day_after_bpu2 = \
+                                            table_with_ohlcv_data_df_slice_numpy_array[
+                                                number_of_last_row_in_np_array_row_slice + 2][1]
+                                    except:
+                                        pass
+
+                                    # get ohlcv of bar before first false breakout
+                                    open_of_bar_before_bpu1 = \
                                         table_with_ohlcv_data_df_slice_numpy_array[
-                                            number_of_last_row_in_np_array_row_slice - 1][5]
+                                            number_of_last_row_in_np_array_row_slice - 1][1]
 
-                                        # check if first false_breakout bar exists
-                                        if open_of_bpu1 and close_of_bpu1:
-                                            # print(f"open_of_bpu1={open_of_bpu1}")
-                                            # print(f"close_of_bpu1={close_of_bpu1}")
-                                            # if open_of_bpu1>=close_of_bar_before_false_breakout:
-                                            if volume_of_bpu1 < 750:
+                                    close_of_bar_before_bpu1 = \
+                                        table_with_ohlcv_data_df_slice_numpy_array[
+                                            number_of_last_row_in_np_array_row_slice - 1][4]
+
+                                    high_of_bar_before_bpu1 = \
+                                        table_with_ohlcv_data_df_slice_numpy_array[
+                                            number_of_last_row_in_np_array_row_slice - 1][2]
+
+                                    low_of_bar_before_bpu1 = \
+                                        table_with_ohlcv_data_df_slice_numpy_array[
+                                            number_of_last_row_in_np_array_row_slice - 1][3]
+
+                                    volume_of_bar_before_bpu1 = \
+                                    table_with_ohlcv_data_df_slice_numpy_array[
+                                        number_of_last_row_in_np_array_row_slice - 1][5]
+
+                                    # check if first false_breakout bar exists
+                                    if open_of_bpu1 and close_of_bpu1:
+                                        # print(f"open_of_bpu1={open_of_bpu1}")
+                                        # print(f"close_of_bpu1={close_of_bpu1}")
+                                        # if open_of_bpu1>=close_of_bar_before_bpu1:
+                                        if volume_of_bpu1 < 750:
+                                            continue
+
+                                        # check that close of false break out bar is lower than open
+                                        # if close_of_bpu1 > open_of_bpu1:
+                                        #     continue
+
+                                        if close_of_bpu1 > current_ath_in_iteration_over_numpy_array:
+                                            continue
+                                        if open_of_bpu1 > current_ath_in_iteration_over_numpy_array:
+                                            continue
+                                        if high_of_bpu1 > current_ath_in_iteration_over_numpy_array:
+                                            continue
+
+                                        # distance_between_calculated_stop_loss_and_sell_order_in_atr = \
+                                        #     (high_of_bpu1+(0.05*advanced_atr)-
+                                        #      (current_ath_in_iteration_over_numpy_array - (advanced_atr * 0.5))) / advanced_atr
+                                        #
+                                        # if distance_between_calculated_stop_loss_and_sell_order_in_atr>2:
+                                        #     continue
+
+                                        # distance_between_current_ath_and_bpu1_open = \
+                                        #     current_ath_in_iteration_over_numpy_array-open_of_bpu1
+                                        # distance_between_current_ath_and_bpu1_close = \
+                                        #     current_ath_in_iteration_over_numpy_array-close_of_bpu1
+
+                                        # check that false breakout bar opens and closes lower than 5%ATR
+                                        # if distance_between_current_ath_and_bpu1_open>0:
+                                        #     if (distance_between_current_ath_and_bpu1_open > advanced_atr * 0.05) and\
+                                        #         (distance_between_current_ath_and_bpu1_close > advanced_atr * 0.05):
+
+                                        if open_of_bpu2 and close_of_bpu2:
+
+                                            if high_of_bpu2 > current_ath_in_iteration_over_numpy_array:
                                                 continue
-
-                                            # check that close of false break out bar is lower than open
-                                            # if close_of_bpu1 > open_of_bpu1:
+                                            # if open_of_bpu2 > close_of_bpu1:
+                                            #     continue
+                                            # if open_of_bpu2 > current_ath_in_iteration_over_numpy_array:
+                                            #     continue
+                                            # if close_of_bpu2 > open_of_bpu1:
+                                            #     continue
+                                            # if low_of_bpu2 > low_of_bpu1:
                                             #     continue
 
-                                            if close_of_bpu1 > current_ath_in_iteration_over_numpy_array:
-                                                continue
-                                            if open_of_bpu1 > current_ath_in_iteration_over_numpy_array:
-                                                continue
-                                            if high_of_bpu1 > current_ath_in_iteration_over_numpy_array:
+                                            #is high of bpu 2 with backlash
+                                            if (current_ath_in_iteration_over_numpy_array-high_of_bpu2)>0.05*advanced_atr:
                                                 continue
 
-                                            # distance_between_calculated_stop_loss_and_sell_order_in_atr = \
-                                            #     (high_of_bpu1+(0.05*advanced_atr)-
-                                            #      (current_ath_in_iteration_over_numpy_array - (advanced_atr * 0.5))) / advanced_atr
-                                            #
-                                            # if distance_between_calculated_stop_loss_and_sell_order_in_atr>2:
-                                            #     continue
 
-                                            # distance_between_current_ath_and_bpu1_open = \
-                                            #     current_ath_in_iteration_over_numpy_array-open_of_bpu1
-                                            # distance_between_current_ath_and_bpu1_close = \
-                                            #     current_ath_in_iteration_over_numpy_array-close_of_bpu1
-
-                                            # check that false breakout bar opens and closes lower than 5%ATR
-                                            # if distance_between_current_ath_and_bpu1_open>0:
-                                            #     if (distance_between_current_ath_and_bpu1_open > advanced_atr * 0.05) and\
-                                            #         (distance_between_current_ath_and_bpu1_close > advanced_atr * 0.05):
-
-                                            if open_of_bpu2 and close_of_bpu2:
-
-                                                if high_of_bpu2 > current_ath_in_iteration_over_numpy_array:
-                                                    continue
-                                                # if open_of_bpu2 > close_of_bpu1:
-                                                #     continue
-                                                # if open_of_bpu2 > current_ath_in_iteration_over_numpy_array:
-                                                #     continue
-                                                # if close_of_bpu2 > open_of_bpu1:
-                                                #     continue
-                                                # if low_of_bpu2 > low_of_bpu1:
+                                            # check if bar next day after second break out bar exists
+                                            if open_of_bar_next_day_after_bpu2:
+                                                # if (close_of_bpu1>open_of_bar_next_day_after_bpu2) and \
+                                                #         ((current_ath_in_iteration_over_numpy_array-open_of_bar_next_day_after_bpu2)<2*advanced_atr):
+                                                #
+                                                #     #check if asset opens next day after break out further than 5%ATR
+                                                #     if (current_ath_in_iteration_over_numpy_array-open_of_bar_next_day_after_bpu2)<0.05*advanced_atr:
+                                                #         continue
+                                                # if open_of_bar_next_day_after_bpu2 > close_of_bpu2:
                                                 #     continue
 
-                                                #is high of bpu 2 with backlash
-                                                if (current_ath_in_iteration_over_numpy_array-high_of_bpu2)>0.05*advanced_atr:
-                                                    continue
+                                                # max_high_of_two_bpu1s = \
+                                                #     max(high_of_bpu1,
+                                                #         high_of_bpu2)
+                                                # distance_between_sell_order_and_stop_loss = (
+                                                #                                                         max_high_of_two_bpu1s + 0.05 * advanced_atr) - \
+                                                #                                             (
+                                                #                                                         current_ath_in_iteration_over_numpy_array - 0.5 * advanced_atr)
+                                                #
+                                                # if distance_between_sell_order_and_stop_loss > 2 * advanced_atr:
+                                                #     continue
 
-
-                                                # check if bar next day after second break out bar exists
-                                                if open_of_bar_next_day_after_bpu2:
-                                                    # if (close_of_bpu1>open_of_bar_next_day_after_bpu2) and \
-                                                    #         ((current_ath_in_iteration_over_numpy_array-open_of_bar_next_day_after_bpu2)<2*advanced_atr):
-                                                    #
-                                                    #     #check if asset opens next day after break out further than 5%ATR
-                                                    #     if (current_ath_in_iteration_over_numpy_array-open_of_bar_next_day_after_bpu2)<0.05*advanced_atr:
-                                                    #         continue
-                                                    # if open_of_bar_next_day_after_bpu2 > close_of_bpu2:
-                                                    #     continue
-
-                                                    # max_high_of_two_bpu1s = \
-                                                    #     max(high_of_bpu1,
-                                                    #         high_of_bpu2)
-                                                    # distance_between_sell_order_and_stop_loss = (
-                                                    #                                                         max_high_of_two_bpu1s + 0.05 * advanced_atr) - \
-                                                    #                                             (
-                                                    #                                                         current_ath_in_iteration_over_numpy_array - 0.5 * advanced_atr)
-                                                    #
-                                                    # if distance_between_sell_order_and_stop_loss > 2 * advanced_atr:
-                                                    #     continue
-
-                                                    date_and_time_of_approaching_to_ath, date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp(
-                                                        first_several_rows_in_np_array_slice[-1][0])
-                                                    # print (f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
-                                                    print(
-                                                        f"for stock {stock_name} on {date_of_approaching_to_ath} approached to ath={current_ath_in_iteration_over_numpy_array}"
-                                                        f" close_of_bar_before_false_breakout={close_of_bar_before_false_breakout} open_of_bpu1={open_of_bpu1}")
-                                                    print(f"open_of_bpu1={open_of_bpu1}")
-                                                    # print (
-                                                    #     f"distance_between_current_ath_and_bpu1_open={distance_between_current_ath_and_bpu1_open}" )
-                                                    list_of_stocks_approaching_ath.append(stock_name)
-                                                    date_and_time_of_ath, date_of_ath = get_date_with_and_without_time_from_timestamp(
-                                                        timestamp_of_current_ath)
-                                                    date_and_time_of_current_timestamp, date_of_current_timestamp = get_date_with_and_without_time_from_timestamp(
-                                                        current_timestamp)
-
-                                                    list_of_stocks_approaching_ath.append(stock_name)
-                                                    df_with_level_atr_bpu_bsu_etc = pd.DataFrame()
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "ticker"] = stock_name
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "exchange"] = exchange
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "short_name"] = short_name
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "ath"] = current_ath_in_iteration_over_numpy_array
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "advanced_atr"] = advanced_atr
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "advanced_atr_over_this_period"] = \
-                                                        advanced_atr_over_this_period
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bsu"] = current_ath_in_iteration_over_numpy_array
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bsu"] = volume_in_current_ath
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "timestamp_of_bsu"] = timestamp_of_current_ath
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "human_date_of_bsu"] = date_of_ath
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "timestamp_of_pre_bpu1"] = current_timestamp
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bar_before_false_breakout"] = open_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bar_before_false_breakout"] = high_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "low_of_bar_before_false_breakout"] = low_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "close_of_bar_before_false_breakout"] = close_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bar_before_false_breakout"] = volume_of_bar_before_false_breakout
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bpu1"] = open_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bpu1"] = high_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "low_of_bpu1"] = low_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "close_of_bpu1"] = close_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bpu1"] = volume_of_bpu1
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bpu2"] = open_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bpu2"] = high_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "low_of_bpu2"] = low_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "close_of_bpu2"] = close_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bpu2"] = volume_of_bpu2
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bar_next_day_after_bpu2"] = open_of_bar_next_day_after_bpu2
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "min_volume_over_last_n_days"] = min_volume_over_last_n_days
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "count_min_volume_over_this_many_days"] = number_of_bars_in_suppression_to_check_for_volume_acceptance
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "row_number_of_bpu1"] = number_of_last_row_in_np_array_row_slice
-
-                                                    try:
-                                                        df_with_level_atr_bpu_bsu_etc = insert_sl_tp_order_price_into_df(
-                                                            df_with_level_atr_bpu_bsu_etc,
-                                                            table_with_ohlcv_data_df_slice_numpy_array,
-                                                            number_of_last_row_in_np_array_row_slice,
-                                                            advanced_atr,
-                                                            current_ath_in_iteration_over_numpy_array,
-                                                            count_min_volume_over_this_many_days)
-                                                    except:
-                                                        traceback.print_exc()
-                                                    df_with_level_atr_bpu_bsu_etc.to_sql(
-                                                        table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
-                                                        engine_for_db_where_ticker_which_may_have_false_breakout_situations,
-                                                        if_exists='append')
-                                                else:
-                                                    # In this case second break out bar exists.
-                                                    # But the bar next day after second breakout bar does not yet exist
-                                                    date_and_time_of_approaching_to_ath, date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp(
-                                                        first_several_rows_in_np_array_slice[-1][0])
-                                                    # print (
-                                                    #     f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
-                                                    print(
-                                                        f"for stock {stock_name} on {date_of_approaching_to_ath} approached to ath={current_ath_in_iteration_over_numpy_array}"
-                                                        f" close_of_bar_before_false_breakout={close_of_bar_before_false_breakout} open_of_bpu1={open_of_bpu1}")
-                                                    print(f"open_of_bpu1={open_of_bpu1}")
-                                                    print(f"close_of_bpu1={close_of_bpu1}")
-                                                    print(
-                                                        f"open_of_bar_next_day_after_bpu2_when_it_does_not_exist_yet={open_of_bar_next_day_after_bpu2}")
-                                                    # print (
-                                                    #     f"distance_between_current_ath_and_bpu1_open={distance_between_current_ath_and_bpu1_open}" )
-                                                    list_of_stocks_approaching_ath.append(stock_name)
-                                                    date_and_time_of_ath, date_of_ath = get_date_with_and_without_time_from_timestamp(
-                                                        timestamp_of_current_ath)
-                                                    date_and_time_of_current_timestamp, date_of_current_timestamp = get_date_with_and_without_time_from_timestamp(
-                                                        current_timestamp)
-
-                                                    list_of_stocks_approaching_ath.append(stock_name)
-                                                    df_with_level_atr_bpu_bsu_etc = pd.DataFrame()
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "ticker"] = stock_name
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "exchange"] = exchange
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "model"] = "ОТБОЙ_от_ATH"
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "short_name"] = short_name
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "ath"] = current_ath_in_iteration_over_numpy_array
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "advanced_atr"] = advanced_atr
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "advanced_atr_over_this_period"] = \
-                                                        advanced_atr_over_this_period
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bsu"] = current_ath_in_iteration_over_numpy_array
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bsu"] = volume_in_current_ath
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "timestamp_of_bsu"] = timestamp_of_current_ath
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "human_date_of_bsu"] = date_of_ath
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[0, "backlash"] = current_ath_in_iteration_over_numpy_array-high_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "acceptable_backlash"] = advanced_atr*0.05
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "timestamp_of_pre_bpu1"] = current_timestamp
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bar_before_false_breakout"] = open_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bar_before_false_breakout"] = high_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "low_of_bar_before_false_breakout"] = low_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "close_of_bar_before_false_breakout"] = close_of_bar_before_false_breakout
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bar_before_false_breakout"] = volume_of_bar_before_false_breakout
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bpu1"] = open_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bpu1"] = high_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "low_of_bpu1"] = low_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "close_of_bpu1"] = close_of_bpu1
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bpu1"] = \
-                                                        volume_of_bpu1
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bpu2"] = open_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "high_of_bpu2"] = high_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "low_of_bpu2"] = low_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "close_of_bpu2"] = close_of_bpu2
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "volume_of_bpu2"] = volume_of_bpu2
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "open_of_bar_next_day_after_bpu2"] = \
-                                                        open_of_bar_next_day_after_bpu2
-
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "min_volume_over_last_n_days"] = \
-                                                        min_volume_over_last_n_days
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "count_min_volume_over_this_many_days"] = \
-                                                        number_of_bars_in_suppression_to_check_for_volume_acceptance
-                                                    df_with_level_atr_bpu_bsu_etc.loc[
-                                                        0, "row_number_of_bpu1"] = \
-                                                        number_of_last_row_in_np_array_row_slice
-
-                                                    try:
-                                                        df_with_level_atr_bpu_bsu_etc = insert_sl_tp_order_price_into_df(
-                                                            df_with_level_atr_bpu_bsu_etc,
-                                                            table_with_ohlcv_data_df_slice_numpy_array,
-                                                            number_of_last_row_in_np_array_row_slice,
-                                                            advanced_atr,
-                                                            current_ath_in_iteration_over_numpy_array,
-                                                            count_min_volume_over_this_many_days)
-                                                    except:
-                                                        traceback.print_exc()
-
-                                                    df_with_level_atr_bpu_bsu_etc.to_sql(
-                                                        table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
-                                                        engine_for_db_where_ticker_which_may_have_false_breakout_situations,
-                                                        if_exists='append')
-                                            else:
-                                                # in this case first false break out bar exists but the second false breakout bar
-                                                # does not exist yet
                                                 date_and_time_of_approaching_to_ath, date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp(
                                                     first_several_rows_in_np_array_slice[-1][0])
                                                 # print (f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
                                                 print(
                                                     f"for stock {stock_name} on {date_of_approaching_to_ath} approached to ath={current_ath_in_iteration_over_numpy_array}"
-                                                    f" close_of_bar_before_false_breakout={close_of_bar_before_false_breakout} open_of_bpu1={open_of_bpu1}")
+                                                    f" close_of_bar_before_bpu1={close_of_bar_before_bpu1} open_of_bpu1={open_of_bpu1}")
                                                 print(f"open_of_bpu1={open_of_bpu1}")
                                                 # print (
                                                 #     f"distance_between_current_ath_and_bpu1_open={distance_between_current_ath_and_bpu1_open}" )
@@ -1546,15 +1340,15 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                     0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
 
                                                 df_with_level_atr_bpu_bsu_etc.loc[
-                                                    0, "open_of_bar_before_false_breakout"] = open_of_bar_before_false_breakout
+                                                    0, "open_of_bar_before_bpu1"] = open_of_bar_before_bpu1
                                                 df_with_level_atr_bpu_bsu_etc.loc[
-                                                    0, "high_of_bar_before_false_breakout"] = high_of_bar_before_false_breakout
+                                                    0, "high_of_bar_before_bpu1"] = high_of_bar_before_bpu1
                                                 df_with_level_atr_bpu_bsu_etc.loc[
-                                                    0, "low_of_bar_before_false_breakout"] = low_of_bar_before_false_breakout
+                                                    0, "low_of_bar_before_bpu1"] = low_of_bar_before_bpu1
                                                 df_with_level_atr_bpu_bsu_etc.loc[
-                                                    0, "close_of_bar_before_false_breakout"] = close_of_bar_before_false_breakout
+                                                    0, "close_of_bar_before_bpu1"] = close_of_bar_before_bpu1
                                                 df_with_level_atr_bpu_bsu_etc.loc[
-                                                    0, "volume_of_bar_before_false_breakout"] = volume_of_bar_before_false_breakout
+                                                    0, "volume_of_bar_before_bpu1"] = volume_of_bar_before_bpu1
 
                                                 df_with_level_atr_bpu_bsu_etc.loc[
                                                     0, "open_of_bpu1"] = open_of_bpu1
@@ -1588,6 +1382,14 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                 df_with_level_atr_bpu_bsu_etc.loc[
                                                     0, "row_number_of_bpu1"] = number_of_last_row_in_np_array_row_slice
 
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "number_of_zeroes_in_price_plus_3"] = number_of_zeroes_in_price + 2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "last_close_price"] = last_close_price
+
+
+
                                                 try:
                                                     df_with_level_atr_bpu_bsu_etc = insert_sl_tp_order_price_into_df(
                                                         df_with_level_atr_bpu_bsu_etc,
@@ -1602,18 +1404,139 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                     table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
                                                     engine_for_db_where_ticker_which_may_have_false_breakout_situations,
                                                     if_exists='append')
+                                            else:
+                                                # In this case second break out bar exists.
+                                                # But the bar next day after second breakout bar does not yet exist
+                                                date_and_time_of_approaching_to_ath, date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp(
+                                                    first_several_rows_in_np_array_slice[-1][0])
+                                                # print (
+                                                #     f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
+                                                print(
+                                                    f"for stock {stock_name} on {date_of_approaching_to_ath} approached to ath={current_ath_in_iteration_over_numpy_array}"
+                                                    f" close_of_bar_before_bpu1={close_of_bar_before_bpu1} open_of_bpu1={open_of_bpu1}")
+                                                print(f"open_of_bpu1={open_of_bpu1}")
+                                                print(f"close_of_bpu1={close_of_bpu1}")
+                                                print(
+                                                    f"open_of_bar_next_day_after_bpu2_when_it_does_not_exist_yet={open_of_bar_next_day_after_bpu2}")
+                                                # print (
+                                                #     f"distance_between_current_ath_and_bpu1_open={distance_between_current_ath_and_bpu1_open}" )
+                                                list_of_stocks_approaching_ath.append(stock_name)
+                                                date_and_time_of_ath, date_of_ath = get_date_with_and_without_time_from_timestamp(
+                                                    timestamp_of_current_ath)
+                                                date_and_time_of_current_timestamp, date_of_current_timestamp = get_date_with_and_without_time_from_timestamp(
+                                                    current_timestamp)
+
+                                                list_of_stocks_approaching_ath.append(stock_name)
+                                                df_with_level_atr_bpu_bsu_etc = pd.DataFrame()
+                                                df_with_level_atr_bpu_bsu_etc.loc[0, "ticker"] = stock_name
+                                                df_with_level_atr_bpu_bsu_etc.loc[0, "exchange"] = exchange
+                                                df_with_level_atr_bpu_bsu_etc.loc[0, "model"] = "ОТБОЙ_от_ATH"
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "short_name"] = short_name
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "ath"] = current_ath_in_iteration_over_numpy_array
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "advanced_atr"] = advanced_atr
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "advanced_atr_over_this_period"] = \
+                                                    advanced_atr_over_this_period
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "high_of_bsu"] = current_ath_in_iteration_over_numpy_array
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "volume_of_bsu"] = volume_in_current_ath
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "timestamp_of_bsu"] = timestamp_of_current_ath
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "human_date_of_bsu"] = date_of_ath
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[0, "backlash"] = current_ath_in_iteration_over_numpy_array-high_of_bpu2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "acceptable_backlash"] = advanced_atr*0.05
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "timestamp_of_pre_bpu1"] = current_timestamp
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "open_of_bar_before_bpu1"] = open_of_bar_before_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "high_of_bar_before_bpu1"] = high_of_bar_before_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "low_of_bar_before_bpu1"] = low_of_bar_before_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "close_of_bar_before_bpu1"] = close_of_bar_before_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "volume_of_bar_before_bpu1"] = volume_of_bar_before_bpu1
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "open_of_bpu1"] = open_of_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "high_of_bpu1"] = high_of_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "low_of_bpu1"] = low_of_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "close_of_bpu1"] = close_of_bpu1
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "volume_of_bpu1"] = \
+                                                    volume_of_bpu1
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "open_of_bpu2"] = open_of_bpu2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "high_of_bpu2"] = high_of_bpu2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "low_of_bpu2"] = low_of_bpu2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "close_of_bpu2"] = close_of_bpu2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "volume_of_bpu2"] = volume_of_bpu2
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "open_of_bar_next_day_after_bpu2"] = \
+                                                    open_of_bar_next_day_after_bpu2
+
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "min_volume_over_last_n_days"] = \
+                                                    min_volume_over_last_n_days
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "count_min_volume_over_this_many_days"] = \
+                                                    number_of_bars_in_suppression_to_check_for_volume_acceptance
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "row_number_of_bpu1"] = \
+                                                    number_of_last_row_in_np_array_row_slice
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "number_of_zeroes_in_price_plus_3"] = number_of_zeroes_in_price + 2
+                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                    0, "last_close_price"] = last_close_price
+
+                                                try:
+                                                    df_with_level_atr_bpu_bsu_etc = insert_sl_tp_order_price_into_df(
+                                                        df_with_level_atr_bpu_bsu_etc,
+                                                        table_with_ohlcv_data_df_slice_numpy_array,
+                                                        number_of_last_row_in_np_array_row_slice,
+                                                        advanced_atr,
+                                                        current_ath_in_iteration_over_numpy_array,
+                                                        count_min_volume_over_this_many_days)
+                                                except:
+                                                    traceback.print_exc()
+
+                                                df_with_level_atr_bpu_bsu_etc.to_sql(
+                                                    table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
+                                                    engine_for_db_where_ticker_which_may_have_false_breakout_situations,
+                                                    if_exists='append')
                                         else:
-                                            # In this case break out bar does not yet exist.
-                                            # Only information about pre-false_breakout bar available
-                                            print(f"open_of_bpu1={open_of_bpu1}")
+                                            # in this case first false break out bar exists but the second false breakout bar
+                                            # does not exist yet
                                             date_and_time_of_approaching_to_ath, date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp(
                                                 first_several_rows_in_np_array_slice[-1][0])
-                                            # print (
-                                            #     f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
+                                            # print (f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
                                             print(
                                                 f"for stock {stock_name} on {date_of_approaching_to_ath} approached to ath={current_ath_in_iteration_over_numpy_array}"
-                                                f" close_of_bar_before_false_breakout={close_of_bar_before_false_breakout} (bpu1 NON-existent) open_of_bpu1={open_of_bpu1}"
-                                                f"close_of_bpu1={close_of_bpu1}")
+                                                f" close_of_bar_before_bpu1={close_of_bar_before_bpu1} open_of_bpu1={open_of_bpu1}")
+                                            print(f"open_of_bpu1={open_of_bpu1}")
+                                            # print (
+                                            #     f"distance_between_current_ath_and_bpu1_open={distance_between_current_ath_and_bpu1_open}" )
                                             list_of_stocks_approaching_ath.append(stock_name)
                                             date_and_time_of_ath, date_of_ath = get_date_with_and_without_time_from_timestamp(
                                                 timestamp_of_current_ath)
@@ -1640,21 +1563,21 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                 0, "timestamp_of_bsu"] = timestamp_of_current_ath
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0, "human_date_of_bsu"] = date_of_ath
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "timestamp_of_pre_bpu1"] = current_timestamp
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "timestamp_of_pre_bpu1"] = current_timestamp
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
 
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "open_of_bar_before_false_breakout"] = open_of_bar_before_false_breakout
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "high_of_bar_before_false_breakout"] = high_of_bar_before_false_breakout
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "low_of_bar_before_false_breakout"] = low_of_bar_before_false_breakout
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "close_of_bar_before_false_breakout"] = close_of_bar_before_false_breakout
-                                            # df_with_level_atr_bpu_bsu_etc.loc[
-                                            #     0, "volume_of_bar_before_false_breakout"] = volume_of_bar_before_false_breakout
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "open_of_bar_before_bpu1"] = open_of_bar_before_bpu1
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "high_of_bar_before_bpu1"] = high_of_bar_before_bpu1
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "low_of_bar_before_bpu1"] = low_of_bar_before_bpu1
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "close_of_bar_before_bpu1"] = close_of_bar_before_bpu1
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "volume_of_bar_before_bpu1"] = volume_of_bar_before_bpu1
 
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0, "open_of_bpu1"] = open_of_bpu1
@@ -1680,10 +1603,17 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0, "open_of_bar_next_day_after_bpu2"] = open_of_bar_next_day_after_bpu2
+
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0, "min_volume_over_last_n_days"] = min_volume_over_last_n_days
                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                 0, "count_min_volume_over_this_many_days"] = number_of_bars_in_suppression_to_check_for_volume_acceptance
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "row_number_of_bpu1"] = number_of_last_row_in_np_array_row_slice
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "number_of_zeroes_in_price_plus_3"] = number_of_zeroes_in_price + 2
+                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                0, "last_close_price"] = last_close_price
 
                                             try:
                                                 df_with_level_atr_bpu_bsu_etc = insert_sl_tp_order_price_into_df(
@@ -1695,19 +1625,120 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                     count_min_volume_over_this_many_days)
                                             except:
                                                 traceback.print_exc()
-
                                             df_with_level_atr_bpu_bsu_etc.to_sql(
                                                 table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
                                                 engine_for_db_where_ticker_which_may_have_false_breakout_situations,
                                                 if_exists='append')
+                                    else:
+                                        # In this case break out bar does not yet exist.
+                                        # Only information about pre-false_breakout bar available
+                                        print(f"open_of_bpu1={open_of_bpu1}")
+                                        date_and_time_of_approaching_to_ath, date_of_approaching_to_ath = get_date_with_and_without_time_from_timestamp(
+                                            first_several_rows_in_np_array_slice[-1][0])
+                                        # print (
+                                        #     f"number_of_bars_which_fulfil_suppression_to_ath={number_of_bars_which_fulfil_suppression_to_ath}" )
+                                        print(
+                                            f"for stock {stock_name} on {date_of_approaching_to_ath} approached to ath={current_ath_in_iteration_over_numpy_array}"
+                                            f" close_of_bar_before_bpu1={close_of_bar_before_bpu1} (bpu1 NON-existent) open_of_bpu1={open_of_bpu1}"
+                                            f"close_of_bpu1={close_of_bpu1}")
+                                        list_of_stocks_approaching_ath.append(stock_name)
+                                        date_and_time_of_ath, date_of_ath = get_date_with_and_without_time_from_timestamp(
+                                            timestamp_of_current_ath)
+                                        date_and_time_of_current_timestamp, date_of_current_timestamp = get_date_with_and_without_time_from_timestamp(
+                                            current_timestamp)
 
+                                        list_of_stocks_approaching_ath.append(stock_name)
+                                        df_with_level_atr_bpu_bsu_etc = pd.DataFrame()
+                                        df_with_level_atr_bpu_bsu_etc.loc[0, "ticker"] = stock_name
+                                        df_with_level_atr_bpu_bsu_etc.loc[0, "exchange"] = exchange
+                                        df_with_level_atr_bpu_bsu_etc.loc[0, "short_name"] = short_name
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "ath"] = current_ath_in_iteration_over_numpy_array
+                                        df_with_level_atr_bpu_bsu_etc.loc[0, "advanced_atr"] = advanced_atr
 
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "advanced_atr_over_this_period"] = \
+                                            advanced_atr_over_this_period
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "high_of_bsu"] = current_ath_in_iteration_over_numpy_array
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "volume_of_bsu"] = volume_in_current_ath
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "timestamp_of_bsu"] = timestamp_of_current_ath
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "human_date_of_bsu"] = date_of_ath
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "timestamp_of_pre_bpu1"] = current_timestamp
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "human_date_of_pre_bpu1"] = date_of_current_timestamp
 
-                                    except Exception as e:
-                                        if e == IndexError:
-                                            print(e)
-                                        else:
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "open_of_bar_before_bpu1"] = open_of_bar_before_bpu1
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "high_of_bar_before_bpu1"] = high_of_bar_before_bpu1
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "low_of_bar_before_bpu1"] = low_of_bar_before_bpu1
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "close_of_bar_before_bpu1"] = close_of_bar_before_bpu1
+                                        # df_with_level_atr_bpu_bsu_etc.loc[
+                                        #     0, "volume_of_bar_before_bpu1"] = volume_of_bar_before_bpu1
+
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "open_of_bpu1"] = open_of_bpu1
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "high_of_bpu1"] = high_of_bpu1
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "low_of_bpu1"] = low_of_bpu1
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "close_of_bpu1"] = close_of_bpu1
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "volume_of_bpu1"] = volume_of_bpu1
+
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "open_of_bpu2"] = open_of_bpu2
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "high_of_bpu2"] = high_of_bpu2
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "low_of_bpu2"] = low_of_bpu2
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "close_of_bpu2"] = close_of_bpu2
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "volume_of_bpu2"] = volume_of_bpu2
+
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "open_of_bar_next_day_after_bpu2"] = open_of_bar_next_day_after_bpu2
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "min_volume_over_last_n_days"] = min_volume_over_last_n_days
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "count_min_volume_over_this_many_days"] = number_of_bars_in_suppression_to_check_for_volume_acceptance
+
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "number_of_zeroes_in_price_plus_3"] = number_of_zeroes_in_price + 2
+                                        df_with_level_atr_bpu_bsu_etc.loc[
+                                            0, "last_close_price"] = last_close_price
+                                        try:
+                                            df_with_level_atr_bpu_bsu_etc = insert_sl_tp_order_price_into_df(
+                                                df_with_level_atr_bpu_bsu_etc,
+                                                table_with_ohlcv_data_df_slice_numpy_array,
+                                                number_of_last_row_in_np_array_row_slice,
+                                                advanced_atr,
+                                                current_ath_in_iteration_over_numpy_array,
+                                                count_min_volume_over_this_many_days)
+                                        except:
                                             traceback.print_exc()
+
+                                        df_with_level_atr_bpu_bsu_etc.to_sql(
+                                            table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
+                                            engine_for_db_where_ticker_which_may_have_false_breakout_situations,
+                                            if_exists='append')
+
+
+
+                                except Exception as e:
+                                    if e == IndexError:
+                                        print(e)
+                                    else:
+                                        traceback.print_exc()
 
 
         ###############################################

@@ -18,6 +18,23 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 
+def get_last_close_price_of_asset(ohlcv_table_df):
+    last_close_price = ohlcv_table_df["close"].iat[-1]
+    return last_close_price
+
+
+def count_zeros(number):
+    number_str = str(number) # convert the number to a string
+    count = 0
+    for digit in number_str:
+        if digit == '0':
+            count += 1
+        elif digit == '.':
+            continue # stop counting zeros at the decimal point
+        else:
+            break # skip non-zero digits
+    return count
+
 
 
 def find_if_level_is_round(level):

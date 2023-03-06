@@ -18,6 +18,20 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 
+def get_last_close_price_of_asset(ohlcv_table_df):
+    last_close_price = ohlcv_table_df["close"].iat[-1]
+    return last_close_price
+def count_zeros(number):
+    number_str = str(number) # convert the number to a string
+    count = 0
+    for digit in number_str:
+        if digit == '0':
+            count += 1
+        elif digit == '.':
+            continue # stop counting zeros at the decimal point
+        else:
+            break # skip non-zero digits
+    return count
 
 def unix_timestamp_to_human_date_time(timestamp):
     return dt.datetime.fromtimestamp(timestamp ).strftime('%Y/%m/%d_%H:%M:%S_%A %Z')
@@ -804,41 +818,38 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             # print ( "before_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df.head(10).to_string() )
 
-
-
-
-            #truncate high and low to two decimal number
-
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
 
-            initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
-            truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
+            initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
+            truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
 
-            truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(trunc,args=(6,))
+            truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
+                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
 
             # print('table_with_ohlcv_data_df.loc[0,"close"]')
             # print ( table_with_ohlcv_data_df.loc[0 , "close"] )
 
-            # round high and low to two decimal number
+            last_close_price = get_last_close_price_of_asset(table_with_ohlcv_data_df)
+            number_of_zeroes_in_price = count_zeros(last_close_price)
 
-            truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(round,args=(2,))
+            # round high and low to two decimal number
+            truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
+                table_with_ohlcv_data_df["high"].apply(round, args=(number_of_zeroes_in_price + 2,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["low"].apply(round, args=(number_of_zeroes_in_price + 2,))
 
             last_two_years_of_data = table_with_ohlcv_data_df.tail(365 * 2)
             # Round ohlc and adjclose to 6 decimal places

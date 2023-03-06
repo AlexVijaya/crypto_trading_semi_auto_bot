@@ -17,7 +17,40 @@ import ccxt
 from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database,database_exists
 from pytz import timezone
+import pprint
+def get_maker_and_taker_fees_and_is_shortable(exchange, trading_pair):
 
+    maker_fee=np.nan
+    taker_fee=np.nan
+    is_shortable=np.nan
+
+    # Get the symbol for the specified trading pair
+    symbol = exchange.markets[trading_pair]['symbol']
+
+    # Check if API keys are required for the exchange
+    if exchange.apiKey is None or exchange.secret is None:
+        return maker_fee, taker_fee, is_shortable
+    
+    # Retrieve the exchange info for the specified symbol
+    exchange_info = exchange.load_trading_limits(symbol)
+    print(f"exchange_info_for_{symbol}")
+    pprint.pprint(exchange_info)
+    #
+    # print("exchange.markets[symbol]")
+    # pprint.pprint(exchange.markets[symbol])
+
+    # Extract the maker and taker fees
+    maker_fee = exchange_info['maker']
+    taker_fee = exchange_info['taker']
+
+
+
+    # Check if the symbol is shortable
+    is_shortable = exchange.markets[symbol].get('short', False)
+
+
+    # Return the results as a tuple
+    return maker_fee, taker_fee, is_shortable
 
 def connect_to_postres_db_with_deleting_it_first(database):
     dialect = db_config.dialect
@@ -214,6 +247,18 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
     try:
         exchange_object = getattr ( ccxt , exchange ) ()
         exchange_object.enableRateLimit = True
+        markets = exchange_object.fetch_markets()
+        # shortable_markets=''
+        # try:
+        #     # shortable_markets = [market['symbol'] for market in markets if market.get('margin', {}).get('short', False)]
+        #     # shortable_markets = [market['symbol'] for market in markets if
+        #     #                      'margin' in market and market['margin'].get('short', False)]
+        #     shortable_markets = [market['symbol'] for market in markets if
+        #                          'margin_enabled' in market and market['margin_enabled']]
+        # except:
+        #     traceback.print_exc()
+        # print(f"shortable_markets for {exchange}")
+        # print(shortable_markets)
     except:
         traceback.print_exc()
 
@@ -252,11 +297,19 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     #         list_of_trading_pairs_with_USDT )
 
                     # if ('active' in exchange_object.markets[trading_pair]) or (exchange_object.markets[trading_pair]['active']):
-                    data = exchange_object.fetch_ohlcv ( trading_pair , timeframe, since=1516147200000)
+
+                    # #collect data from 5 years ago
+                    # data = exchange_object.fetch_ohlcv ( trading_pair , timeframe, since=1516147200000)
+                    #
+                    # collect data from 2011 years ago
+                    data = exchange_object.fetch_ohlcv(trading_pair, timeframe, since=1293829200000)
+
+
 
                     # print ( f"counter_for_{exchange}=" , counter )
                     header = ['Timestamp' , 'open' , 'high' , 'low' , 'close' , 'volume']
                     data_df = pd.DataFrame ( data , columns = header ).set_index ( 'Timestamp' )
+
                     # try:
                     #     data_4h = await exchange_object.fetch_ohlcv ( trading_pair , '1d' )
                     #
@@ -290,6 +343,24 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
 
                     data_df['ticker'] = trading_pair
                     data_df['exchange'] = exchange
+
+
+                    # get info if asset is shortable , get maker and taker fees
+                    # try:
+                    #     trading_pair_initial = trading_pair.replace("_", "/")
+                    #     maker_fee, taker_fee, is_shortable = \
+                    #         get_maker_and_taker_fees_and_is_shortable(exchange_object, trading_pair_initial)
+                    #     data_df['maker_fee'] = maker_fee
+                    #     data_df['taker_fee'] = taker_fee
+                    #     data_df['is_shortable'] = is_shortable
+                    # except:
+                    #     traceback.print_exc()
+
+                    #exclude levereged tockens
+                    if "3L" in trading_pair:
+                        continue
+                    if "3S" in trading_pair:
+                        continue
 
 
                     #если  в крипе мало данных , то ее не добавляем
