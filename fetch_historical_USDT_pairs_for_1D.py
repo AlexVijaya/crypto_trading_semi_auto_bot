@@ -362,6 +362,18 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     if "3S" in trading_pair:
                         continue
 
+                    if "4L" in trading_pair:
+                        continue
+                    if "4S" in trading_pair:
+                        continue
+
+                    if "5L" in trading_pair:
+                        continue
+                    if "5S" in trading_pair:
+                        continue
+
+
+
 
                     #если  в крипе мало данных , то ее не добавляем
                     if len(data_df)<10:

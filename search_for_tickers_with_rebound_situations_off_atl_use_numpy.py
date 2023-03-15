@@ -17,7 +17,8 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-
+from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
 def count_zeros(number):
     number_str = str(number) # convert the number to a string
     count = 0
