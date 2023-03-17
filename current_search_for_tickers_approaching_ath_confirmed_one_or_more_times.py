@@ -785,6 +785,27 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                 row_number_of_bpu1 = ohlcv_df_with_high_equal_to_ath_slice["index_column"].iat[1]
                 row_number_of_bsu = ohlcv_df_with_high_equal_to_ath_slice["index_column"].iat[0]
 
+                #############################################
+                last_all_time_high_row_number = row_number_of_bsu
+                # check if the found ath is legit and no broken for the last 2 years
+                ath_is_not_broken_for_a_long_time = True
+                try:
+                    number_of_days_where_ath_was_not_broken = 366 * 2
+                    table_with_ohlcv_data_df_slice_numpy_array = table_with_ohlcv_data_df.to_numpy(copy=True)
+                    ath_is_not_broken_for_a_long_time = check_ath_breakout(table_with_ohlcv_data_df_slice_numpy_array,
+                                                                           number_of_days_where_ath_was_not_broken,
+                                                                           all_time_high,
+                                                                           last_all_time_high_row_number)
+                    print(f"ath={all_time_high}")
+                    print(f"ath_is_not_broken_for_a_long_time for {stock_name}={ath_is_not_broken_for_a_long_time}")
+
+                except:
+                    pass
+
+                if ath_is_not_broken_for_a_long_time == False:
+                    continue
+
+
                 # check that all time high was not broken 5 years before
                 if (row_number_of_bsu - (365*2)) >= 0:
                     row_number_of_first_row_to_check_two_year_non_exceed_ath = row_number_of_bsu - 365*2

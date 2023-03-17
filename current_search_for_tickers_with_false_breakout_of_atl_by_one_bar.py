@@ -711,8 +711,8 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             last_two_years_of_data = table_with_ohlcv_data_df.tail(365 * 2)
 
             # Round ohlc and adjclose to 6 decimal places
-            last_two_years_of_data = last_two_years_of_data.round(
-                {'open': 6, 'high': 6, 'low': 6, 'close': 6, 'adjclose': 6})
+            #last_two_years_of_data = last_two_years_of_data.round(
+# {'open': 6, 'high': 6, 'low': 6, 'close': 6, 'adjclose': 6})
 
             # Find row number of last row in last_two_years_of_data
             false_breakout_bar_row_number = last_two_years_of_data.index[-1]
@@ -789,6 +789,26 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                     last_two_years_of_data_but_one_last_day['low'] == all_time_low].index
 
             last_all_time_low_row_number = all_time_low_row_numbers[-1]
+
+            # check if the found atl is legit and no broken for the last 2 years
+
+            atl_is_not_broken_for_a_long_time = True
+            try:
+                number_of_days_where_atl_was_not_broken = 366 * 2
+                table_with_ohlcv_data_df_slice_numpy_array = table_with_ohlcv_data_df.to_numpy(copy=True)
+                atl_is_not_broken_for_a_long_time = check_atl_breakout(
+                    table_with_ohlcv_data_df_slice_numpy_array,
+                    number_of_days_where_atl_was_not_broken,
+                    all_time_low,
+                    last_all_time_low_row_number)
+                print(f"atl={all_time_low}")
+                print(f"atl_is_not_broken_for_a_long_time for {stock_name}={atl_is_not_broken_for_a_long_time}")
+
+            except:
+                pass
+
+            if atl_is_not_broken_for_a_long_time == False:
+                continue
 
             # Find timestamps of all_time_low rows and create list out of them
             all_time_low_timestamps = last_two_years_of_data_but_one_last_day.loc[all_time_low_row_numbers][

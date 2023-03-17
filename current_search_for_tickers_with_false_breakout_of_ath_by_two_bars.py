@@ -699,8 +699,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             last_two_years_of_data = table_with_ohlcv_data_df.tail(365 * 2)
 
             # Round ohlc and adjclose to 6 decimal places
-            last_two_years_of_data = last_two_years_of_data.round(
-                {'open': 6, 'high': 6, 'low': 6, 'close': 6, 'adjclose': 6})
+            #last_two_years_of_data = last_two_years_of_data.round(
+# {'open': 6, 'high': 6, 'low': 6, 'close': 6, 'adjclose': 6})
 
             # Find row number of last row in last_two_years_of_data
             false_breakout_bar_row_number = last_two_years_of_data.index[-2]
@@ -785,6 +785,26 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                 last_two_years_of_data_but_two_last_days[last_two_years_of_data_but_two_last_days['high'] == all_time_high].index
 
             last_all_time_high_row_number = all_time_high_row_numbers[-1]
+
+            # check if the found ath is legit and no broken for the last 2 years
+            ath_is_not_broken_for_a_long_time = True
+            try:
+                number_of_days_where_ath_was_not_broken = 366 * 2
+                table_with_ohlcv_data_df_slice_numpy_array = table_with_ohlcv_data_df.to_numpy(copy=True)
+                ath_is_not_broken_for_a_long_time = check_ath_breakout(
+                    table_with_ohlcv_data_df_slice_numpy_array,
+                    number_of_days_where_ath_was_not_broken,
+                    all_time_high,
+                    last_all_time_high_row_number)
+                print(f"ath={all_time_high}")
+                print(f"ath_is_not_broken_for_a_long_time for {stock_name}={ath_is_not_broken_for_a_long_time}")
+
+            except:
+                pass
+
+            if ath_is_not_broken_for_a_long_time == False:
+                continue
+
 
             # Find timestamps of all_time_high rows and create list out of them
             all_time_high_timestamps = last_two_years_of_data_but_two_last_days.loc[all_time_high_row_numbers][

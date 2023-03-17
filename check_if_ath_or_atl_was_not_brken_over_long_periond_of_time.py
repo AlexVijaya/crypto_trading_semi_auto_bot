@@ -33,7 +33,11 @@ def check_atl_breakout(table_with_ohlcv_data_df_slice_numpy_array,
     # Determine if the low was broken during the selected period
     atl_is_not_broken_for_a_long_time = True
     min_low_over_given_period = np.min(selected_rows[:, 3])
+    print("min_low__over_given_perion_when_true")
+    print(min_low_over_given_period)
     if min_low_over_given_period < atl:
+        print("min_low__over_given_perion_when_false")
+        print(min_low_over_given_period)
         atl_is_not_broken_for_a_long_time = False
 
     return atl_is_not_broken_for_a_long_time

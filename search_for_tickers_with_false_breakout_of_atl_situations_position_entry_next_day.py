@@ -854,8 +854,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
             last_two_years_of_data = table_with_ohlcv_data_df.tail(365 * 2)
             # Round ohlc and adjclose to 6 decimal places
-            last_two_years_of_data = last_two_years_of_data.round(
-                {'open': 6, 'high': 6, 'low': 6, 'close': 6, 'adjclose': 6})
+            #last_two_years_of_data = last_two_years_of_data.round(
+# {'open': 6, 'high': 6, 'low': 6, 'close': 6, 'adjclose': 6})
 
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )

@@ -773,6 +773,25 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                 # print ( "row_of_last_ath_which_is_limit_level_also" )
                 # print ( row_of_last_ath_which_is_limit_level_also )
 
+                # check if the found ath is legit and no broken for the last 2 years
+                ath_is_not_broken_for_a_long_time = True
+                try:
+                    number_of_days_where_ath_was_not_broken = 366 * 2
+                    table_with_ohlcv_data_df_slice_numpy_array = table_with_ohlcv_data_df.to_numpy(copy=True)
+                    ath_is_not_broken_for_a_long_time = check_ath_breakout(
+                        table_with_ohlcv_data_df_slice_numpy_array,
+                        number_of_days_where_ath_was_not_broken,
+                        ath,
+                        row_of_last_ath_which_is_limit_level_also)
+                    print(f"ath={ath}")
+                    print(f"ath_is_not_broken_for_a_long_time for {stock_name}={ath_is_not_broken_for_a_long_time}")
+
+                except:
+                    pass
+
+                if ath_is_not_broken_for_a_long_time == False:
+                    continue
+
                 current_high = last_several_rows_in_np_array_slice[-1][2]
                 current_low = last_several_rows_in_np_array_slice[-1][3]
 
