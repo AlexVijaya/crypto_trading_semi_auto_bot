@@ -602,12 +602,12 @@ def plot_ohlcv_chart_with_levels_formed_by_fast_breakout_off_atl (name_of_folder
                 open_of_possible_breakout_bar_is_away_from_atl_in_percentage=\
                     100*((open_of_possible_breakout_bar-atl)/advanced_atr)
 
-                sell_stop=round(sell_stop,6)
-                stop_loss = round ( stop_loss , 6 )
+                sell_stop=round(sell_stop,20)
+                stop_loss = round ( stop_loss ,20)
 
-                take_profit=round(take_profit,6)
+                take_profit=round(take_profit,20)
                 open_of_possible_breakout_bar_is_away_from_atl_in_percentage=\
-                    round(open_of_possible_breakout_bar_is_away_from_atl_in_percentage,6)
+                    round(open_of_possible_breakout_bar_is_away_from_atl_in_percentage,20)
 
 
                 fig.add_hline ( y = stop_loss , row = 2 , col = 1 , line_color = "magenta", opacity=0.5 )

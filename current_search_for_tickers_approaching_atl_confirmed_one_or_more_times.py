@@ -17,8 +17,8 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
 
 def print_df_to_file(dataframe, subdirectory_name):
     series = dataframe.squeeze()
@@ -674,6 +674,13 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             exchange = table_with_ohlcv_data_df.loc[0 , "exchange"]
             short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
 
+            try:
+                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                        table_with_ohlcv_data_df)
+            except:
+                traceback.print_exc()
+
 
 
             # truncated_high_and_low_table_with_ohlcv_data_df[["high","low"]]=table_with_ohlcv_data_df[["high","low"]].round(decimals=2)
@@ -688,25 +695,25 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             #truncate high and low to two decimal number
 
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["high"].apply ( round , args = (20,) )
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["low"].apply ( round , args = (20,) )
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["open"].apply ( round , args = (20,) )
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["close"].apply ( round , args = (20,) )
 
             initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
             truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(round,args=(6,))
+                table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["low"].apply ( round , args = (20,) )
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["open"].apply ( round , args = (20,) )
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["close"].apply ( round , args = (20,) )
 
             print('table_with_ohlcv_data_df.loc[0,"close"]')
             print ( table_with_ohlcv_data_df.loc[0 , "close"] )
@@ -714,9 +721,9 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             # round high and low to two decimal number
 
             # truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-            #     table_with_ohlcv_data_df["high"].apply(round,args=(2,))
+            #     table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             # truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-            #     table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+            #     table_with_ohlcv_data_df["low"].apply ( round , args = (20,) )
 
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )
@@ -849,7 +856,7 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                                                       table_with_ohlcv_data_df,
                                                       row_number_of_bpu1)
 
-                advanced_atr = round(advanced_atr, 6)
+                advanced_atr = round(advanced_atr, 20)
 
                 #get ohlcv of bsu
                 open_of_bsu = high_of_bsu = low_of_bsu = close_of_bsu = volume_of_bsu = timestamp_of_bsu = np.nan

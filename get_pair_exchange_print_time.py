@@ -93,17 +93,17 @@ def create_string_for_output_to_file_for_stock_rebound_from_atl(stock_name,
     take_profit_3_to_1 = buy_order + (advanced_atr * 0.5) * 3
     take_profit_4_to_1 = buy_order + (advanced_atr * 0.5) * 4
 
-    stop_loss = round(stop_loss, 3)
-    calculated_backlash_from_advanced_atr = round(calculated_backlash_from_advanced_atr, 3)
-    buy_order = round(buy_order, 3)
-    take_profit_3_to_1 = round(take_profit_3_to_1, 3)
-    take_profit_4_to_1 = round(take_profit_4_to_1, 3)
+    stop_loss = round(stop_loss, 20)
+    calculated_backlash_from_advanced_atr = round(calculated_backlash_from_advanced_atr, 20)
+    buy_order = round(buy_order, 20)
+    take_profit_3_to_1 = round(take_profit_3_to_1, 20)
+    take_profit_4_to_1 = round(take_profit_4_to_1, 20)
 
-    advanced_atr = round(advanced_atr, 3)
-    low_of_bsu = round(low_of_bsu, 3)
-    low_of_bpu1 = round(low_of_bpu1, 3)
-    low_of_bpu2 = round(low_of_bpu2, 3)
-    close_of_bpu2 = round(close_of_bpu2, 3)
+    advanced_atr = round(advanced_atr, 20)
+    low_of_bsu = round(low_of_bsu, 20)
+    low_of_bpu1 = round(low_of_bpu1, 20)
+    low_of_bpu2 = round(low_of_bpu2, 20)
+    close_of_bpu2 = round(close_of_bpu2, 20)
 
 
     string_for_output=f"Инструмент = {stock_name} , модель = Отбой от ATL, ATL={atl}, ATR({advanced_atr_over_this_period})={advanced_atr}, люфт={calculated_backlash_from_advanced_atr}, допустимый_люфт={acceptable_backlash}, отложенный_ордер={buy_order}, расчетный_SL={stop_loss}, TP(3/1)={take_profit_3_to_1}, TP(4/1)={take_profit_4_to_1}, low_of_bsu={low_of_bsu}, low_of_bpu1={low_of_bpu1}, low_of_bpu2={low_of_bpu2}, close_of_bpu2={close_of_bpu2}, дата_бсу={timestamp_of_bsu_without_time}, дата_бпу1={timestamp_of_bpu1_without_time}, дата_бпу2={timestamp_of_bpu2_without_time}\n\n"

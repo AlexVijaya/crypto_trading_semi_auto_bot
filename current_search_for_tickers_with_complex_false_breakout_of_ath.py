@@ -17,8 +17,8 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
 def get_last_close_price_of_asset(ohlcv_table_df):
     last_close_price = ohlcv_table_df["close"].iat[-1]
     return last_close_price
@@ -939,6 +939,15 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             exchange = table_with_ohlcv_data_df.loc[0 , "exchange"]
             short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
 
+            try:
+                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                        table_with_ohlcv_data_df)
+            except:
+                traceback.print_exc()
+            table_with_ohlcv_data_df = table_with_ohlcv_data_df[
+                ["Timestamp", "open", "high", "low", "close", "volume"]].copy()
+
 
 
             # truncated_high_and_low_table_with_ohlcv_data_df[["high","low"]]=table_with_ohlcv_data_df[["high","low"]].round(decimals=2)
@@ -948,28 +957,26 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             # print ( table_with_ohlcv_data_df.head(10).to_string() )
 
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(20,))
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["low"].apply(round, args=(20,))
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["open"].apply(round, args=(20,))
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["close"].apply(round, args=(20,))
 
             initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
             truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["low"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["open"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["close"].apply(round, args=(20,))
 
-            # print('table_with_ohlcv_data_df.loc[0,"close"]')
-            # print ( table_with_ohlcv_data_df.loc[0 , "close"] )
 
             last_close_price = get_last_close_price_of_asset(table_with_ohlcv_data_df)
             number_of_zeroes_in_price = count_zeros(last_close_price)
@@ -986,25 +993,25 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             # #truncate high and low to two decimal number
             #
             # table_with_ohlcv_data_df["high"] = \
-            #     table_with_ohlcv_data_df["high"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["high"].apply(round , args = (20 ,) )
             # table_with_ohlcv_data_df["low"] = \
-            #     table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["low"].apply(round , args = (20 ,) )
             # table_with_ohlcv_data_df["open"] = \
-            #     table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["open"].apply(round , args = (20 ,) )
             # table_with_ohlcv_data_df["close"] = \
-            #     table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["close"].apply(round , args = (20 ,) )
             #
             # initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
             # truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
             #
             # truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-            #     table_with_ohlcv_data_df["high"].apply(trunc,args=(6,))
+            #     table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             # truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-            #     table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["low"].apply(round , args = (20 ,) )
             # truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-            #     table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["open"].apply(round , args = (20 ,) )
             # truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-            #     table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+            #     table_with_ohlcv_data_df["close"].apply(round , args = (20 ,) )
             #
             # # print('table_with_ohlcv_data_df.loc[0,"close"]')
             # # print ( table_with_ohlcv_data_df.loc[0 , "close"] )
@@ -1012,9 +1019,9 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             # # round high and low to two decimal number
             #
             # truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-            #     table_with_ohlcv_data_df["high"].apply(round,args=(2,))
+            #     table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             # truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-            #     table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+            #     table_with_ohlcv_data_df["low"].apply ( round , args = (20,) )
 
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )
@@ -1132,7 +1139,7 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                     advanced_atr=calculate_atr_without_paranormal_bars_from_numpy_array ( advanced_atr_over_this_period,
                                                                                              first_several_rows_in_np_array_slice ,
                                                                                              number_of_last_row_in_np_array_row_slice )
-                                    advanced_atr=round(advanced_atr,6)
+                                    advanced_atr=round(advanced_atr,20)
                                     #проверить что поджатие на маленьких барах
                                     # try:
                                     #

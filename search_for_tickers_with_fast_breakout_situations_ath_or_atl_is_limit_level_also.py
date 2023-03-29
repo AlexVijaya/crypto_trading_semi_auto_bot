@@ -17,9 +17,14 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
-
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
+def get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(ohlcv_data_df):
+    asset_type = ohlcv_data_df["asset_type"].iat[-1]
+    maker_fee = ohlcv_data_df["maker_fee"].iat[-1]
+    taker_fee = ohlcv_data_df["taker_fee"].iat[-1]
+    url_of_trading_pair = ohlcv_data_df["url_of_trading_pair"].iat[-1]
+    return asset_type,maker_fee,taker_fee,url_of_trading_pair
 def get_last_close_price_of_asset(ohlcv_table_df):
     last_close_price = ohlcv_table_df["close"].iat[-1]
     return last_close_price
@@ -614,6 +619,13 @@ def search_for_tickers_with_fast_breakout_situations(db_where_ohlcv_data_for_sto
             exchange = table_with_ohlcv_data_df.loc[0 , "exchange"]
             short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
 
+            try:
+                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                        table_with_ohlcv_data_df)
+            except:
+                traceback.print_exc()
+
 
 
             # truncated_high_and_low_table_with_ohlcv_data_df[["high","low"]]=table_with_ohlcv_data_df[["high","low"]].round(decimals=2)
@@ -628,35 +640,33 @@ def search_for_tickers_with_fast_breakout_situations(db_where_ohlcv_data_for_sto
             #truncate high and low to two decimal number
 
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["high"].apply(round , args = (20 ,) )
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["low"].apply(round , args = (20 ,) )
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["open"].apply(round , args = (20 ,) )
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["close"].apply(round , args = (20 ,) )
 
             initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
             truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(trunc,args=(6,))
+                table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["low"].apply(round , args = (20 ,) )
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["open"].apply(round , args = (20 ,) )
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["close"].apply(round , args = (20 ,) )
 
-            # print('table_with_ohlcv_data_df.loc[0,"close"]')
-            # print ( table_with_ohlcv_data_df.loc[0 , "close"] )
 
             # round high and low to two decimal number
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(round,args=(2,))
+                table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["low"].apply ( round , args = (20,) )
 
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )

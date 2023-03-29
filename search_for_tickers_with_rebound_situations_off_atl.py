@@ -17,10 +17,15 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
 
-
+def get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(ohlcv_data_df):
+    asset_type = ohlcv_data_df["asset_type"].iat[-1]
+    maker_fee = ohlcv_data_df["maker_fee"].iat[-1]
+    taker_fee = ohlcv_data_df["taker_fee"].iat[-1]
+    url_of_trading_pair = ohlcv_data_df["url_of_trading_pair"].iat[-1]
+    return asset_type,maker_fee,taker_fee,url_of_trading_pair
 def find_if_level_is_round(level):
     level = str ( level )
     level_is_round=False
@@ -519,6 +524,13 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             exchange = table_with_ohlcv_data_df.loc[0 , "exchange"]
             short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
 
+            try:
+                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                        table_with_ohlcv_data_df)
+            except:
+                traceback.print_exc()
+
 
 
             # truncated_high_and_low_table_with_ohlcv_data_df[["high","low"]]=table_with_ohlcv_data_df[["high","low"]].round(decimals=2)
@@ -533,25 +545,25 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             #truncate high and low to two decimal number
 
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["high"].apply(round , args = (20 ,) )
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["low"].apply(round , args = (20 ,) )
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["open"].apply(round , args = (20 ,) )
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["close"].apply(round , args = (20 ,) )
 
             initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
             truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy ()
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(trunc,args=(6,))
+                table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["low"].apply(round , args = (20 ,) )
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["open"].apply(round , args = (20 ,) )
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply ( trunc , args = (6 ,) )
+                table_with_ohlcv_data_df["close"].apply(round , args = (20 ,) )
 
             print('table_with_ohlcv_data_df.loc[0,"close"]')
             print ( table_with_ohlcv_data_df.loc[0 , "close"] )
@@ -559,9 +571,9 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
             # round high and low to two decimal number
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"]=\
-                table_with_ohlcv_data_df["high"].apply(round,args=(2,))
+                table_with_ohlcv_data_df["high"].apply(round,args = (20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply ( round , args = (2 ,) )
+                table_with_ohlcv_data_df["low"].apply ( round , args = (20,) )
 
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )
@@ -698,8 +710,8 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                                              table_with_ohlcv_data_df ,
                                              row_number_of_bpu1 )
 
-                    atr = round ( atr , 6 )
-                    advanced_atr = round ( advanced_atr , 6 )
+                    atr = round ( atr ,20)
+                    advanced_atr = round ( advanced_atr ,20)
 
                     # print("true_low_of_bsu")
                     # print(true_low_of_bsu)
@@ -764,19 +776,19 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                             distance_between_calculated_stop_loss_and_buy_order_in_atr=\
                                 distance_between_calculated_stop_loss_and_buy_order/advanced_atr
 
-                            calculated_stop_loss = round(calculated_stop_loss, 3)
-                            calculated_backlash_from_advanced_atr = round(calculated_backlash_from_advanced_atr, 3)
-                            buy_order = round(buy_order, 3)
-                            take_profit_3_to_1 = round(take_profit_3_to_1, 3)
-                            take_profit_4_to_1 = round(take_profit_4_to_1, 3)
+                            calculated_stop_loss = round(calculated_stop_loss, 20)
+                            calculated_backlash_from_advanced_atr = round(calculated_backlash_from_advanced_atr, 20)
+                            buy_order = round(buy_order, 20)
+                            take_profit_3_to_1 = round(take_profit_3_to_1, 20)
+                            take_profit_4_to_1 = round(take_profit_4_to_1, 20)
                             # distance_between_calculated_stop_loss_and_buy_order_in_atr =\
-                            #     round(distance_between_calculated_stop_loss_and_buy_order_in_atr, 3)
+                            #     round(distance_between_calculated_stop_loss_and_buy_order_in_atr, 20)
 
-                            advanced_atr = round(advanced_atr, 3)
-                            low_of_bsu = round(low_of_bsu, 3)
-                            low_of_bpu1 = round(low_of_bpu1, 3)
-                            low_of_bpu2 = round(low_of_bpu2, 3)
-                            close_of_bpu2 = round(close_of_bpu2, 3)
+                            advanced_atr = round(advanced_atr, 20)
+                            low_of_bsu = round(low_of_bsu, 20)
+                            low_of_bpu1 = round(low_of_bpu1, 20)
+                            low_of_bpu2 = round(low_of_bpu2, 20)
+                            close_of_bpu2 = round(close_of_bpu2, 20)
 
                             list_of_tickers_where_atl_is_also_limit_level.append ( stock_name )
                             df_with_level_atr_bpu_bsu_etc = pd.DataFrame ()
@@ -873,8 +885,8 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                 #     advanced_atr = calculate_advanced_atr ( advanced_atr_over_this_period ,
                 #                                             table_with_ohlcv_data_df ,
                 #                                             row_number_of_bpu1 )
-                #     atr=round(atr,6)
-                #     advanced_atr = round ( advanced_atr , 6 )
+                #     atr=round(atr,20)
+                #     advanced_atr = round ( advanced_atr ,20)
                 #
                 #     low_of_bsu = truncated_high_and_low_table_with_ohlcv_data_df_slice.loc[row_number_of_bsu , "low"]
                 #     low_of_bpu1 = truncated_high_and_low_table_with_ohlcv_data_df_slice.loc[row_number_of_bpu1 , "low"]

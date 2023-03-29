@@ -17,8 +17,8 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
 
 def print_df_to_file(dataframe, subdirectory_name):
     series = dataframe.squeeze()
@@ -935,10 +935,10 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             take_profit_when_sl_is_calculated_3_to_1 = sell_order - (calculated_stop_loss - sell_order) * 3
             take_profit_when_sl_is_calculated_4_to_1 = sell_order - (calculated_stop_loss - sell_order) * 4
             # round decimals for ease of looking at
-            sell_order = round(sell_order, 3)
-            calculated_stop_loss = round(calculated_stop_loss, 3)
-            take_profit_when_sl_is_calculated_3_to_1 = round(take_profit_when_sl_is_calculated_3_to_1, 3)
-            take_profit_when_sl_is_calculated_4_to_1 = round(take_profit_when_sl_is_calculated_4_to_1, 3)
+            sell_order = round(sell_order, 20)
+            calculated_stop_loss = round(calculated_stop_loss, 20)
+            take_profit_when_sl_is_calculated_3_to_1 = round(take_profit_when_sl_is_calculated_3_to_1, 20)
+            take_profit_when_sl_is_calculated_4_to_1 = round(take_profit_when_sl_is_calculated_4_to_1, 20)
 
             # plot all lines with advanced atr (stop loss is technical)
             technical_stop_loss = high_of_breakout_bar + (0.05 * advanced_atr)
@@ -948,13 +948,13 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             distance_between_technical_stop_loss_and_sell_order_in_atr = \
                 distance_between_technical_stop_loss_and_sell_order / advanced_atr
             # round technical stop loss and take profit for ease of looking at
-            technical_stop_loss = round(technical_stop_loss, 3)
+            technical_stop_loss = round(technical_stop_loss, 20)
             take_profit_when_sl_is_technical_3_to_1 = \
-                round(take_profit_when_sl_is_technical_3_to_1, 3)
+                round(take_profit_when_sl_is_technical_3_to_1, 20)
             take_profit_when_sl_is_technical_4_to_1 = \
-                round(take_profit_when_sl_is_technical_4_to_1, 3)
+                round(take_profit_when_sl_is_technical_4_to_1, 20)
             distance_between_technical_stop_loss_and_sell_order_in_atr = \
-                round(distance_between_technical_stop_loss_and_sell_order_in_atr, 3)
+                round(distance_between_technical_stop_loss_and_sell_order_in_atr, 20)
 
             df_with_level_atr_bpu_bsu_etc = pd.DataFrame()
             df_with_level_atr_bpu_bsu_etc.loc[

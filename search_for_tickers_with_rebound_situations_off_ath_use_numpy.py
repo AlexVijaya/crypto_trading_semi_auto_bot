@@ -17,10 +17,35 @@ from sqlalchemy import MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_ath_breakout
-from check_if_ath_or_atl_was_not_brken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
+import re
+
+def get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(ohlcv_data_df):
+    asset_type = ohlcv_data_df["asset_type"].iat[-1]
+    maker_fee = ohlcv_data_df["maker_fee"].iat[-1]
+    taker_fee = ohlcv_data_df["taker_fee"].iat[-1]
+    url_of_trading_pair = ohlcv_data_df["url_of_trading_pair"].iat[-1]
+    return asset_type,maker_fee,taker_fee,url_of_trading_pair
+def is_scientific_notation(number_string):
+    return bool(re.match(r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$', str(number_string)))
 def count_zeros(number):
-    number_str = str(number) # convert the number to a string
+
+    number_str = str(number)  # convert the number to a string
+    if is_scientific_notation(number_str):
+
+        # print("number_str")
+        # print(number_str)
+        # print(bool('e' in number_str))
+        # print(type(number_str))
+        if 'e-' in number_str:
+            mantissa, exponent = number_str.split('e-')
+            # print("mantissa")
+            # print(mantissa)
+            # print("exponent")
+            # print(int(float(exponent)))
+            return int(float(exponent))
+
     count = 0
     for digit in number_str:
         if digit == '0':
@@ -936,6 +961,18 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             exchange = table_with_ohlcv_data_df.loc[0, "exchange"]
             short_name = table_with_ohlcv_data_df.loc[0, 'short_name']
 
+            try:
+                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                        table_with_ohlcv_data_df)
+
+                # do not short unshortable assets
+                if asset_type == 'spot':
+                    continue
+
+            except:
+                traceback.print_exc()
+
             # truncated_high_and_low_table_with_ohlcv_data_df[["high","low"]]=table_with_ohlcv_data_df[["high","low"]].round(decimals=2)
             # print("truncated_high_and_low_table_with_ohlcv_data_df")
             # print ( truncated_high_and_low_table_with_ohlcv_data_df)
@@ -945,37 +982,35 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
             # truncate high and low to two decimal number
 
             table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(20,))
             table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["low"].apply(round, args=(20,))
             table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["open"].apply(round, args=(20,))
             table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["close"].apply(round, args=(20,))
 
             initial_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
             truncated_high_and_low_table_with_ohlcv_data_df = table_with_ohlcv_data_df.copy()
 
             truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["low"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["open"] = \
-                table_with_ohlcv_data_df["open"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["open"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["close"] = \
-                table_with_ohlcv_data_df["close"].apply(trunc, args=(20,))
+                table_with_ohlcv_data_df["close"].apply(round, args=(20,))
 
-            # print('table_with_ohlcv_data_df.loc[0,"close"]')
-            # print ( table_with_ohlcv_data_df.loc[0 , "close"] )
 
             last_close_price = get_last_close_price_of_asset(table_with_ohlcv_data_df)
             number_of_zeroes_in_price = count_zeros(last_close_price)
 
             # round high and low to two decimal number
             truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(round, args=(number_of_zeroes_in_price + 2,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(number_of_zeroes_in_price + 3,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(round, args=(number_of_zeroes_in_price + 2,))
+                table_with_ohlcv_data_df["low"].apply(round, args=(number_of_zeroes_in_price + 3,))
             # print ( "after_table_with_ohlcv_data_df" )
             # print ( table_with_ohlcv_data_df )
             #####################
@@ -1401,6 +1436,20 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                         count_min_volume_over_this_many_days)
                                                 except:
                                                     traceback.print_exc()
+
+                                                try:
+                                                    asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                                                        get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                                                            table_with_ohlcv_data_df)
+
+                                                    df_with_level_atr_bpu_bsu_etc["asset_type"] = asset_type
+                                                    df_with_level_atr_bpu_bsu_etc["maker_fee"] = maker_fee
+                                                    df_with_level_atr_bpu_bsu_etc["taker_fee"] = taker_fee
+                                                    df_with_level_atr_bpu_bsu_etc[
+                                                        "url_of_trading_pair"] = url_of_trading_pair
+                                                except:
+                                                    traceback.print_exc()
+
                                                 df_with_level_atr_bpu_bsu_etc.to_sql(
                                                     table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
                                                     engine_for_db_where_ticker_which_may_have_false_breakout_situations,
@@ -1522,6 +1571,19 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                 except:
                                                     traceback.print_exc()
 
+                                                try:
+                                                    asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                                                        get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                                                            table_with_ohlcv_data_df)
+
+                                                    df_with_level_atr_bpu_bsu_etc["asset_type"] = asset_type
+                                                    df_with_level_atr_bpu_bsu_etc["maker_fee"] = maker_fee
+                                                    df_with_level_atr_bpu_bsu_etc["taker_fee"] = taker_fee
+                                                    df_with_level_atr_bpu_bsu_etc[
+                                                        "url_of_trading_pair"] = url_of_trading_pair
+                                                except:
+                                                    traceback.print_exc()
+
                                                 df_with_level_atr_bpu_bsu_etc.to_sql(
                                                     table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
                                                     engine_for_db_where_ticker_which_may_have_false_breakout_situations,
@@ -1626,6 +1688,20 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                     count_min_volume_over_this_many_days)
                                             except:
                                                 traceback.print_exc()
+
+                                            try:
+                                                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                                                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                                                        table_with_ohlcv_data_df)
+
+                                                df_with_level_atr_bpu_bsu_etc["asset_type"] = asset_type
+                                                df_with_level_atr_bpu_bsu_etc["maker_fee"] = maker_fee
+                                                df_with_level_atr_bpu_bsu_etc["taker_fee"] = taker_fee
+                                                df_with_level_atr_bpu_bsu_etc[
+                                                    "url_of_trading_pair"] = url_of_trading_pair
+                                            except:
+                                                traceback.print_exc()
+
                                             df_with_level_atr_bpu_bsu_etc.to_sql(
                                                 table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be,
                                                 engine_for_db_where_ticker_which_may_have_false_breakout_situations,
@@ -1725,6 +1801,18 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                 advanced_atr,
                                                 current_ath_in_iteration_over_numpy_array,
                                                 count_min_volume_over_this_many_days)
+                                        except:
+                                            traceback.print_exc()
+
+                                        try:
+                                            asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+                                                get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+                                                    table_with_ohlcv_data_df)
+
+                                            df_with_level_atr_bpu_bsu_etc["asset_type"] = asset_type
+                                            df_with_level_atr_bpu_bsu_etc["maker_fee"] = maker_fee
+                                            df_with_level_atr_bpu_bsu_etc["taker_fee"] = taker_fee
+                                            df_with_level_atr_bpu_bsu_etc["url_of_trading_pair"] = url_of_trading_pair
                                         except:
                                             traceback.print_exc()
 

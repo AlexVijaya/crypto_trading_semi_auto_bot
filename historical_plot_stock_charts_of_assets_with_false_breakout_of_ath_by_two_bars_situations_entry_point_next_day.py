@@ -823,9 +823,9 @@ def plot_ohlcv_charts_with_false_breakout_of_ath_situations_entry_point_next_day
                 # take_profit = (sell_order - calculated_stop_loss) * 3+sell_order
                 #
                 # #round decimals for ease of looking at
-                # sell_order=round(sell_order,6)
-                # calculated_stop_loss = round ( calculated_stop_loss , 6 )
-                # take_profit = round ( take_profit , 6 )
+                # sell_order=round(sell_order,20)
+                # calculated_stop_loss = round ( calculated_stop_loss ,20)
+                # take_profit = round ( take_profit ,20)
 
                 # plot all lines with advanced atr (stop loss is technical)
                 sell_order = ath - (advanced_atr * 0.5)
@@ -836,34 +836,34 @@ def plot_ohlcv_charts_with_false_breakout_of_ath_situations_entry_point_next_day
                 distance_between_technical_stop_loss_and_sell_order_in_atr=\
                     distance_between_technical_stop_loss_and_sell_order/advanced_atr
                 #round technical stop loss and take profit for ease of looking at
-                technical_stop_loss=round(technical_stop_loss,2)
+                technical_stop_loss=round(technical_stop_loss,20)
                 take_profit_when_stop_loss_is_technical_3_to_1=\
-                    round(take_profit_when_stop_loss_is_technical_3_to_1,2)
+                    round(take_profit_when_stop_loss_is_technical_3_to_1,20)
                 take_profit_when_stop_loss_is_technical_4_to_1 = \
-                    round ( take_profit_when_stop_loss_is_technical_4_to_1 , 2 )
+                    round ( take_profit_when_stop_loss_is_technical_4_to_1 ,20)
 
                 distance_between_technical_stop_loss_and_sell_order_in_atr = \
-                    round ( distance_between_technical_stop_loss_and_sell_order_in_atr , 2 )
-                sell_order = round ( sell_order , 2 )
-                advanced_atr = round ( advanced_atr , 2 )
+                    round ( distance_between_technical_stop_loss_and_sell_order_in_atr ,20)
+                sell_order = round ( sell_order ,20)
+                advanced_atr = round ( advanced_atr ,20)
 
                 open_of_bar_next_day_after_second_false_breakout_bar=\
-                    round ( open_of_bar_next_day_after_second_false_breakout_bar , 2 )
+                    round ( open_of_bar_next_day_after_second_false_breakout_bar ,20)
 
-                open_of_false_breakout_bar=round ( open_of_false_breakout_bar , 2 )
-                high_of_false_breakout_bar = round ( high_of_false_breakout_bar , 2 )
-                low_of_false_breakout_bar = round ( low_of_false_breakout_bar , 2 )
-                close_of_false_breakout_bar = round ( close_of_false_breakout_bar , 2 )
+                open_of_false_breakout_bar=round ( open_of_false_breakout_bar ,20)
+                high_of_false_breakout_bar = round ( high_of_false_breakout_bar ,20)
+                low_of_false_breakout_bar = round ( low_of_false_breakout_bar ,20)
+                close_of_false_breakout_bar = round ( close_of_false_breakout_bar ,20)
 
-                open_of_second_false_breakout_bar = round ( open_of_second_false_breakout_bar , 2 )
-                high_of_second_false_breakout_bar = round ( high_of_second_false_breakout_bar , 2 )
-                low_of_second_false_breakout_bar = round ( low_of_second_false_breakout_bar , 2 )
-                close_of_second_false_breakout_bar = round ( close_of_second_false_breakout_bar , 2 )
+                open_of_second_false_breakout_bar = round ( open_of_second_false_breakout_bar ,20)
+                high_of_second_false_breakout_bar = round ( high_of_second_false_breakout_bar ,20)
+                low_of_second_false_breakout_bar = round ( low_of_second_false_breakout_bar ,20)
+                close_of_second_false_breakout_bar = round ( close_of_second_false_breakout_bar ,20)
 
-                open_of_bar_before_false_breakout = round ( open_of_bar_before_false_breakout , 2 )
-                high_of_bar_before_false_breakout = round ( high_of_bar_before_false_breakout , 2 )
-                low_of_bar_before_false_breakout = round ( low_of_bar_before_false_breakout , 2 )
-                close_of_bar_before_false_breakout = round ( close_of_bar_before_false_breakout , 2 )
+                open_of_bar_before_false_breakout = round ( open_of_bar_before_false_breakout ,20)
+                high_of_bar_before_false_breakout = round ( high_of_bar_before_false_breakout ,20)
+                low_of_bar_before_false_breakout = round ( low_of_bar_before_false_breakout ,20)
+                close_of_bar_before_false_breakout = round ( close_of_bar_before_false_breakout ,20)
 
 
                 fig.add_hline ( y = sell_order , row = 2 , col = 1 , line_color = "red" , opacity = 0.5 )

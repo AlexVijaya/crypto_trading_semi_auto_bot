@@ -590,9 +590,9 @@ def plot_ohlcv_charts_with_breakout_of_atl_situations_entry_point_next_day(name_
                 sell_order = atl - (advanced_atr * 0.5)
                 take_profit = sell_order - (calculated_stop_loss - sell_order) * 3
                 # round decimals for ease of looking at
-                sell_order = round ( sell_order , 6 )
-                calculated_stop_loss = round ( calculated_stop_loss , 6 )
-                take_profit = round ( take_profit , 6 )
+                sell_order = round ( sell_order ,20)
+                calculated_stop_loss = round ( calculated_stop_loss ,20)
+                take_profit = round ( take_profit ,20)
 
                 # plot all lines with advanced atr (stop loss is technical)
                 technical_stop_loss = high_of_breakout_bar + (0.05 * advanced_atr)
@@ -601,11 +601,11 @@ def plot_ohlcv_charts_with_breakout_of_atl_situations_entry_point_next_day(name_
                 distance_between_technical_stop_loss_and_sell_order_in_atr = \
                     distance_between_technical_stop_loss_and_sell_order / advanced_atr
                 # round technical stop loss and take profit for ease of looking at
-                technical_stop_loss = round ( technical_stop_loss , 6 )
+                technical_stop_loss = round ( technical_stop_loss ,20)
                 take_profit_when_stop_loss_is_technical = \
-                    round ( take_profit_when_stop_loss_is_technical , 6 )
+                    round ( take_profit_when_stop_loss_is_technical ,20)
                 distance_between_technical_stop_loss_and_sell_order_in_atr=\
-                    round(distance_between_technical_stop_loss_and_sell_order_in_atr,6)
+                    round(distance_between_technical_stop_loss_and_sell_order_in_atr,20)
 
                 technical_stop_loss_possible = np.nan
                 if distance_between_technical_stop_loss_and_sell_order < 2 * advanced_atr:

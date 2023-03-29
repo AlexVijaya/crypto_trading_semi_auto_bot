@@ -642,17 +642,17 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_atl (name_of_folder_where
                 take_profit_3_to_1 = buy_limit + (advanced_atr * 0.5) * 3
                 take_profit_4_to_1 = buy_limit + (advanced_atr * 0.5) * 4
 
-                stop_loss = round ( stop_loss , 3 )
-                calculated_backlash_from_advanced_atr = round ( calculated_backlash_from_advanced_atr , 3 )
-                buy_limit = round ( buy_limit , 3 )
-                take_profit_3_to_1 = round ( take_profit_3_to_1 , 3 )
-                take_profit_4_to_1 = round ( take_profit_4_to_1 , 3 )
-                # open_of_tvx = round ( open_of_tvx , 3 )
-                advanced_atr = round ( advanced_atr , 3 )
-                low_of_bsu = round ( low_of_bsu , 3 )
-                low_of_bpu1 = round ( low_of_bpu1 , 3 )
-                low_of_bpu2 = round ( low_of_bpu2 , 3 )
-                close_of_bpu2 = round ( close_of_bpu2 , 3 )
+                stop_loss = round ( stop_loss ,20)
+                calculated_backlash_from_advanced_atr = round ( calculated_backlash_from_advanced_atr ,20)
+                buy_limit = round ( buy_limit ,20)
+                take_profit_3_to_1 = round ( take_profit_3_to_1 ,20)
+                take_profit_4_to_1 = round ( take_profit_4_to_1 ,20)
+                # open_of_tvx = round ( open_of_tvx ,20)
+                advanced_atr = round ( advanced_atr ,20)
+                low_of_bsu = round ( low_of_bsu ,20)
+                low_of_bpu1 = round ( low_of_bpu1 ,20)
+                low_of_bpu2 = round ( low_of_bpu2 ,20)
+                close_of_bpu2 = round ( close_of_bpu2 ,20)
 
                 deposit_in_dollars=1000
                 risk_percentage=0.01
