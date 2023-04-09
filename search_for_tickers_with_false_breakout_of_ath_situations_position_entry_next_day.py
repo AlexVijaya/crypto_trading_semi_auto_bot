@@ -843,8 +843,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                         table_with_ohlcv_data_df)
 
                 # do not short unshortable assets
-                if asset_type == 'spot':
-                    continue
+                # if asset_type == 'spot':
+ #                   continue
 
             except:
                 traceback.print_exc()
@@ -883,9 +883,9 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
             # round high and low to two decimal number
             truncated_high_and_low_table_with_ohlcv_data_df["high"] = \
-                table_with_ohlcv_data_df["high"].apply(round, args=(number_of_zeroes_in_price + 2,))
+                table_with_ohlcv_data_df["high"].apply(round, args=(20,))
             truncated_high_and_low_table_with_ohlcv_data_df["low"] = \
-                table_with_ohlcv_data_df["low"].apply(round, args=(number_of_zeroes_in_price + 2,))
+                table_with_ohlcv_data_df["low"].apply(round, args=(20,))
 
 
 
@@ -1056,6 +1056,7 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                         high_of_false_breakout_bar = np.nan
 
                                         open_of_bar_next_day_after_false_breakout_bar = np.nan
+                                        timestamp_of_bar_next_day_after_false_breakout_bar=np.nan
                                         volume_of_false_breakout_bar=np.nan
                                         try:
                                             open_of_false_breakout_bar=\
@@ -1094,6 +1095,9 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                         try:
                                             open_of_bar_next_day_after_false_breakout_bar=\
                                                 table_with_ohlcv_data_df_slice_numpy_array[number_of_last_row_in_np_array_row_slice+1][1]
+                                            timestamp_of_bar_next_day_after_false_breakout_bar = \
+                                                table_with_ohlcv_data_df_slice_numpy_array[
+                                                    number_of_last_row_in_np_array_row_slice + 1][0]
                                         except:
                                             pass
 
@@ -1217,6 +1221,10 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                                     0 , "volume_of_false_breakout_bar"] = volume_of_false_breakout_bar
                                                                 df_with_level_atr_bpu_bsu_etc.loc[
                                                                     0 , "open_of_bar_next_day_after_false_breakout_bar"] = open_of_bar_next_day_after_false_breakout_bar
+                                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                                    0, "timestamp_of_bar_next_day_after_false_breakout_bar"] = timestamp_of_bar_next_day_after_false_breakout_bar
+                                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                                    0, "position_entry_timestamp"] = timestamp_of_bar_next_day_after_false_breakout_bar
 
                                                                 df_with_level_atr_bpu_bsu_etc.loc[
                                                                     0 , "min_volume_over_last_n_days"] = min_volume_over_last_n_days

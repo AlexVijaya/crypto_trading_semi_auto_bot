@@ -1021,6 +1021,7 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                         high_of_false_breakout_bar = np.nan
 
                                         open_of_bar_next_day_after_false_breakout_bar = np.nan
+                                        timestamp_of_bar_next_day_after_false_breakout_bar=np.nan
                                         volume_of_false_breakout_bar = np.nan
                                         try:
                                             open_of_false_breakout_bar = \
@@ -1065,6 +1066,9 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                             open_of_bar_next_day_after_false_breakout_bar = \
                                                 table_with_ohlcv_data_df_slice_numpy_array[
                                                     number_of_last_row_in_np_array_row_slice + 1][1]
+                                            timestamp_of_bar_next_day_after_false_breakout_bar=\
+                                                table_with_ohlcv_data_df_slice_numpy_array[
+                                                    number_of_last_row_in_np_array_row_slice + 1][0]
                                         except:
                                             pass
 
@@ -1192,7 +1196,14 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                                     0 , "volume_of_false_breakout_bar"] = volume_of_false_breakout_bar
 
                                                                 df_with_level_atr_bpu_bsu_etc.loc[
-                                                                    0 , "open_of_bar_next_day_after_false_breakout_bar"] = open_of_bar_next_day_after_false_breakout_bar
+                                                                    0 , "open_of_bar_next_day_after_false_breakout_bar"] =\
+                                                                    open_of_bar_next_day_after_false_breakout_bar
+                                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                                    0, "timestamp_of_bar_next_day_after_false_breakout_bar"] =\
+                                                                    timestamp_of_bar_next_day_after_false_breakout_bar
+                                                                df_with_level_atr_bpu_bsu_etc.loc[
+                                                                    0, "position_entry_timestamp"] = \
+                                                                    timestamp_of_bar_next_day_after_false_breakout_bar
 
                                                                 df_with_level_atr_bpu_bsu_etc.loc[
                                                                     0 , "min_volume_over_last_n_days"] = min_volume_over_last_n_days

@@ -66,18 +66,18 @@ def run_multiple_search_current_rebound_breakout_false_breakout_situations():
     files = [
         #"plot_stock_charts_of_assets_which_is_closer_to_ath_than_50%_atr.py",
           #       "plot_stock_charts_of_assets_which_is_closer_to_atl_than_50%_atr.py",
-                 "plot_stock_charts_of_assets_with_breakout_of_ath_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_breakout_of_ath_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_breakout_of_atl_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_breakout_of_atl_situations_entry_point_on_day_two.py",
-                 "plot_stock_charts_of_assets_with_false_breakout_of_ath_by_two_bars_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_false_breakout_of_ath_by_two_bars_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_false_breakout_of_atl_by_two_bars_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_false_breakout_of_atl_by_two_bars_situations_entry_point_next_day.py",
-                 "plot_stock_charts_of_assets_with_fast_breakout_situations_off_the_ath_in_history.py",
-                 "plot_stock_charts_of_assets_with_fast_breakout_situations_off_the_atl_in_history.py",
-                 "plot_stock_charts_of_assets_with_rebound_situations_off_the_ath_in_history.py",
-                 "plot_stock_charts_of_assets_with_rebound_situations_off_the_atl_in_history.py"]
+                 "historical_plot_stock_charts_of_assets_with_breakout_of_ath_situations_entry_point_next_day.py",
+                 "historical_plot_stock_charts_of_assets_with_breakout_of_ath_situations_entry_point_on_day_two.py",
+                 "historical_plot_stock_charts_of_assets_with_breakout_of_atl_situations_entry_point_next_day.py",
+                 "historical_plot_stock_charts_of_assets_with_breakout_of_atl_situations_entry_point_on_day_two.py",
+                 "historical_plot_stock_charts_of_assets_with_false_breakout_of_ath_by_two_bars_situations_entry_point_next_day.py",
+                 "historical_plot_stock_charts_of_assets_with_false_breakout_of_ath_situations_entry_point_next_day.py",
+                 "historical_plot_stock_charts_of_assets_with_false_breakout_of_atl_by_two_bars_situations_entry_point_next_day.py",
+                 "historical_plot_stock_charts_of_assets_with_false_breakout_of_atl_situations_entry_point_next_day.py",
+                 "historical_plot_stock_charts_of_assets_with_fast_breakout_situations_off_the_ath_in_history.py",
+                 "historical_plot_stock_charts_of_assets_with_fast_breakout_situations_off_the_atl_in_history.py",
+                 "historical_plot_stock_charts_of_assets_with_rebound_situations_off_the_ath_in_history.py",
+                 "historical_plot_stock_charts_of_assets_with_rebound_situations_off_the_atl.py"]
 
     # Run each Python file in the list in parallel
     processes = []

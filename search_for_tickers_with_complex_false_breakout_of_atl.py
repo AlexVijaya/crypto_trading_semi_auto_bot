@@ -146,6 +146,7 @@ def insert_sl_tp_order_price_into_df(df_with_level_atr_bpu_bsu_etc,
     volume_of_second_false_breakout_bar = np.nan
 
     open_of_bar_next_day_after_second_false_breakout_bar = np.nan
+    timestamp_of_bar_next_day_after_second_false_breakout_bar = np.nan
 
     try:
         timestamp_of_false_breakout_bar = \
@@ -313,7 +314,7 @@ def insert_sl_tp_order_price_into_df(df_with_level_atr_bpu_bsu_etc,
     # df_with_level_atr_bpu_bsu_etc.loc[
     #     0, "calculated_take_profit_3_to_1_achieved"] = take_profit_achieved
     # df_with_level_atr_bpu_bsu_etc.loc[
-    #     0, "calculated__stop_loss_with_tp_3_to_1_achieved"] = stop_loss_achieved
+    #     0, "calculated_stop_loss_with_tp_3_to_1_achieved"] = stop_loss_achieved
     # df_with_level_atr_bpu_bsu_etc.loc[
     #     0, "neither_calculated_tp_3_to_1_or_sl_3_to_1_achieved"] = neither_tp_or_sl_achieved
     # df_with_level_atr_bpu_bsu_etc.loc[
@@ -1241,6 +1242,7 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                         volume_of_second_false_breakout_bar = np.nan
 
                                         open_of_bar_next_day_after_second_false_breakout_bar = np.nan
+                                        timestamp_of_bar_next_day_after_second_false_breakout_bar=np.nan
 
 
                                         #get ohlcv for the first false breakout bar
@@ -1556,6 +1558,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "timestamp_of_third_bar_after_breakout_and_more"] = timestamp_of_third_bar_after_breakout_and_more
                                                             df_with_level_atr_bpu_bsu_etc.loc[
+                                                                0, "position_entry_timestamp"] = timestamp_of_third_bar_after_breakout_and_more
+                                                            df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "open_of_third_bar_after_breakout_and_more"] = open_of_third_bar_after_breakout_and_more
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "high_of_third_bar_after_breakout_and_more"] = high_of_third_bar_after_breakout_and_more
@@ -1568,6 +1572,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "open_of_bar_next_day_after_second_false_breakout_bar"] = open_of_bar_next_day_after_second_false_breakout_bar
+                                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                                0, "timestamp_of_bar_next_day_after_second_false_breakout_bar"] = timestamp_of_bar_next_day_after_second_false_breakout_bar
 
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "min_volume_over_last_n_days"] = min_volume_over_last_n_days

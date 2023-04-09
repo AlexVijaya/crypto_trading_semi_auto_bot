@@ -190,11 +190,11 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_ath (name_of_folder_where
 
             high_of_bpu1 = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'high_of_bpu1']
             high_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'high_of_bpu2']
-            timestamp_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'timestamp_of_bsu']
-            timestamp_of_bpu1 = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'timestamp_of_bpu1']
-            timestamp_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'timestamp_of_bpu2']
-            human_time_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[
-                row_with_level_formed_by_rebound_off_ath , 'human_time_of_bsu']
+            # timestamp_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'timestamp_of_bsu']
+            # timestamp_of_bpu1 = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'timestamp_of_bpu1']
+            # timestamp_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[row_with_level_formed_by_rebound_off_ath , 'timestamp_of_bpu2']
+            # human_time_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[
+            #     row_with_level_formed_by_rebound_off_ath , 'human_time_of_bsu']
             human_time_of_bpu1 = table_of_levels_formed_by_rebound_off_ath_df.loc[
                 row_with_level_formed_by_rebound_off_ath , 'human_time_of_bpu1']
             human_time_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[
@@ -217,18 +217,18 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_ath (name_of_folder_where
             close_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[
                 row_with_level_formed_by_rebound_off_ath , 'close_of_bpu2']
             open_of_tvx = table_of_levels_formed_by_rebound_off_ath_df.loc[
-                row_with_level_formed_by_rebound_off_ath , 'open_of_tvx']
+                row_with_level_formed_by_rebound_off_ath , 'open_of_bar_next_day_after_bpu2']
 
 
             human_time_of_bpu1_list = human_time_of_bpu1.split ( " " )
             human_time_of_bpu1 = human_time_of_bpu1_list[0]
 
-            true_high_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[
-                row_with_level_formed_by_rebound_off_ath , 'true_high_of_bsu']
-            true_high_of_bpu1 = table_of_levels_formed_by_rebound_off_ath_df.loc[
-                row_with_level_formed_by_rebound_off_ath , 'true_high_of_bpu1']
-            true_high_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[
-                row_with_level_formed_by_rebound_off_ath , 'true_high_of_bpu2']
+            # true_high_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[
+            #     row_with_level_formed_by_rebound_off_ath , 'true_high_of_bsu']
+            # true_high_of_bpu1 = table_of_levels_formed_by_rebound_off_ath_df.loc[
+            #     row_with_level_formed_by_rebound_off_ath , 'true_high_of_bpu1']
+            # true_high_of_bpu2 = table_of_levels_formed_by_rebound_off_ath_df.loc[
+            #     row_with_level_formed_by_rebound_off_ath , 'true_high_of_bpu2']
 
             volume_of_bsu = table_of_levels_formed_by_rebound_off_ath_df.loc[
                 row_with_level_formed_by_rebound_off_ath , 'volume_of_bsu']

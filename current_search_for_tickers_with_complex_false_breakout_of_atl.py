@@ -310,7 +310,7 @@ def insert_sl_tp_order_price_into_df(df_with_level_atr_bpu_bsu_etc,
     # df_with_level_atr_bpu_bsu_etc.loc[
     #     0, "calculated_take_profit_3_to_1_achieved"] = take_profit_achieved
     # df_with_level_atr_bpu_bsu_etc.loc[
-    #     0, "calculated__stop_loss_with_tp_3_to_1_achieved"] = stop_loss_achieved
+    #     0, "calculated_stop_loss_with_tp_3_to_1_achieved"] = stop_loss_achieved
     # df_with_level_atr_bpu_bsu_etc.loc[
     #     0, "neither_calculated_tp_3_to_1_or_sl_3_to_1_achieved"] = neither_tp_or_sl_achieved
     # df_with_level_atr_bpu_bsu_etc.loc[

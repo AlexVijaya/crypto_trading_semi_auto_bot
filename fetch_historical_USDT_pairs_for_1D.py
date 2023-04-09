@@ -18,7 +18,7 @@ from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database,database_exists
 from pytz import timezone
 import pprint
-from verify_that_asset_has_enough_volume import check_volume
+from verify_that_asset_has_enough_volume_compared_to_bitcoin import check_volume_compared_to_bitcoin
 from get_info_from_load_markets import get_asset_type2
 from get_info_from_load_markets import get_fees
 from get_info_from_load_markets import fetch_huobipro_ohlcv
@@ -30,6 +30,7 @@ from get_info_from_load_markets import get_maker_taker_fees_for_huobi
 from get_info_from_load_markets import get_limit_of_daily_candles_original_limits
 from get_info_from_load_markets import fetch_entire_ohlcv
 from get_info_from_load_markets import get_perpetual_swap_url
+from verify_that_asset_has_enough_volume import check_volume_is_enough
 
 def get_maker_and_taker_fees_and_is_shortable(exchange, trading_pair):
 
@@ -552,8 +553,11 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
 
 
                     #если  в крипе мало данных , то ее не добавляем
-                    if len(data_df)<10:
-                        continue
+                    # if len(data_df)<10:
+
+                    #     continue
+
+                    number_of_available_days_in_dataframe=len(data_df)
 
                     # # slice last 30 days for volume calculation
                     # min_volume_over_these_many_last_days=30
@@ -577,14 +581,23 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     #         continue
 
                     # #проверить, что объем за последние n дней не меньше, чем 1 цены биткойна
-                    min_volume_over_these_many_last_days = 30
+                    min_volume_over_these_many_last_days = 7
                     min_volume_in_bitcoin=2
-                    asset_has_enough_volume=True
-                    asset_has_enough_volume=check_volume(trading_pair,
-                                                         min_volume_over_these_many_last_days,
-                                                         data_df,
-                                                         min_volume_in_bitcoin,
-                                                         last_bitcoin_price)
+                    min_acceptable_volume_in_usd=100000
+                    asset_has_enough_volume=False
+                    # asset_has_enough_volume=check_volume_compared_to_bitcoin(trading_pair,
+                    #                                                          min_volume_over_these_many_last_days,
+                    #                                                          data_df,
+                    #                                                          min_volume_in_bitcoin,
+                    #                                                          last_bitcoin_price)
+                    asset_has_enough_volume=check_volume_is_enough(trading_pair,
+                                     min_volume_over_these_many_last_days,
+                                     data_df,
+                                     min_acceptable_volume_in_usd
+                                     )
+
+
+
                     if not asset_has_enough_volume:
                         continue
 
@@ -646,6 +659,7 @@ def get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price,exchang
                     data_df["exchange_timezone_name"] = np.nan
                     data_df["industry"] = np.nan
                     data_df["market_cap"] = np.nan
+                    # data_df["number_of_available_days_in_dataframe"] = number_of_available_days_in_dataframe
 
                     data_df.set_index("open_time")
                     # try:
@@ -805,12 +819,12 @@ def fetch_historical_usdt_pairs_asynchronously(last_bitcoin_price,engine,exchang
     # await asyncio.gather(*coroutines, return_exceptions = True)
     #
     for exchange in exchanges_list:
-        if exchange not in ['binance','huobipro','bybit',
-                            'mexc','mexc3','bitfinex',
+        if exchange not in ['binance','huobipro','bybit','mexc',
+                            'mexc3',
                             'bitfinex2','exmo','gateio','kucoin','coinex']:
             continue
 
-        # if exchange!="huobipro":
+        # if exchange!="lbank2":
         #     continue
 
         get_hisorical_data_from_exchange_for_many_symbols(last_bitcoin_price, exchange,
@@ -867,7 +881,8 @@ def fetch_all_ohlcv_tables(timeframe,database_name,last_bitcoin_price):
 
 if __name__=="__main__":
     timeframe='1d'
-    last_bitcoin_price=get_real_time_bitcoin_price()
+    # last_bitcoin_price=get_real_time_bitcoin_price()
+    last_bitcoin_price=28000
     print("last_bitcoin_price")
     print(last_bitcoin_price)
     database_name="ohlcv_data_for_usdt_pairs_for_1d_timeframe"

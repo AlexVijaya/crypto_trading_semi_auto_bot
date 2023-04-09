@@ -23,6 +23,7 @@ google-auth-httplib2 = "*"
 google-api-python-client = "*"
 huobi = "*"
 huobi-client = "*"
+cryptocompare = "*"
 
 [dev-packages]
 

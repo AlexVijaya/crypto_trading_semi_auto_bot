@@ -375,7 +375,7 @@ def insert_sl_tp_order_price_into_df(df_with_level_atr_bpu_bsu_etc,
     df_with_level_atr_bpu_bsu_etc.loc[
         0, "calculated_take_profit_3_to_1_achieved"] = take_profit_achieved
     df_with_level_atr_bpu_bsu_etc.loc[
-        0, "calculated__stop_loss_with_tp_3_to_1_achieved"] = stop_loss_achieved
+        0, "calculated_stop_loss_with_tp_3_to_1_achieved"] = stop_loss_achieved
     df_with_level_atr_bpu_bsu_etc.loc[
         0, "neither_calculated_tp_3_to_1_or_sl_3_to_1_achieved"] = neither_tp_or_sl_achieved
     df_with_level_atr_bpu_bsu_etc.loc[
@@ -1056,8 +1056,8 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                         table_with_ohlcv_data_df)
 
                 # do not short unshortable assets
-                if asset_type == 'spot':
-                    continue
+                # if asset_type == 'spot':
+ #                   continue
 
             except:
                 traceback.print_exc()
@@ -1631,6 +1631,7 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                             high_of_breakout_bar = np.nan
 
                                             open_of_bar_next_day_after_breakout_bar = np.nan
+                                            timestamp_of_bar_next_day_after_breakout_bar = np.nan
                                             volume_of_breakout_bar = np.nan
                                             try:
                                                 open_of_breakout_bar = \
@@ -1671,6 +1672,9 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                                 open_of_bar_next_day_after_breakout_bar = \
                                                     table_with_ohlcv_data_df_slice_numpy_array[
                                                         number_of_last_row_in_np_array_row_slice + 1][1]
+                                                timestamp_of_bar_next_day_after_breakout_bar = \
+                                                    table_with_ohlcv_data_df_slice_numpy_array[
+                                                        number_of_last_row_in_np_array_row_slice + 1][0]
                                             except:
                                                 pass
 
@@ -1746,6 +1750,10 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                                                         0 , "volume_of_breakout_bar"] = volume_of_breakout_bar
                                                                     df_with_level_atr_bpu_bsu_etc.loc[
                                                                         0 , "open_of_bar_next_day_after_breakout_bar"] = open_of_bar_next_day_after_breakout_bar
+                                                                    df_with_level_atr_bpu_bsu_etc.loc[
+                                                                        0, "timestamp_of_bar_next_day_after_breakout_bar"] = timestamp_of_bar_next_day_after_breakout_bar
+                                                                    df_with_level_atr_bpu_bsu_etc.loc[
+                                                                        0, "position_entry_timestamp"] = timestamp_of_bar_next_day_after_breakout_bar
 
                                                                     df_with_level_atr_bpu_bsu_etc.loc[
                                                                         0 , "min_volume_over_last_n_days"] = min_volume_over_last_n_days

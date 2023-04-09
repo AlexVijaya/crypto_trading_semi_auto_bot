@@ -12,14 +12,21 @@ import huobi_client
 # from huobi_client.generic import GenericClient
 def get_perpetual_swap_url(exchange_id, trading_pair):
 
+    trading_pair=trading_pair.split(":")[0]
+    base=trading_pair.split("/")[0]
+    quote = trading_pair.split("/")[1]
+
+    print(f"base = {base}")
+    print(f"quote = {quote}")
+
     if exchange_id == 'binance':
         return f"https://www.binance.com/en/futures/{trading_pair.replace('/','').upper()}"
     elif exchange_id == 'huobipro':
-        return f"https://futures.huobi.com/en-us/swap/exchange/?contract_code={trading_pair.replace('/','').lower()}"
+        return f"https://www.huobi.com/en-us/futures/linear_swap/exchange#contract_code={base}-{quote}&contract_type=swap&type=isolated"
     elif exchange_id == 'bybit':
-        return f"https://www.bybit.com/app/exchange/{trading_pair.replace('/','').upper()}"
+        return f"https://www.bybit.com/trade/{quote.lower()}/{trading_pair.replace('/','').upper()}"
     elif exchange_id == 'hitbtc3':
-        return f"https://www.huobi.com/en-us/futures/linear_swap/exchange#contract_code={trading_pair.replace('/','-').upper()}&contract_type=swap&type=cross"
+        return f"https://www.hitbtc.com/futures/{base.lower()}-to-{quote.lower()}"
     elif exchange_id == 'mexc' or exchange_id == 'mexc3':
         return f"https://futures.mexc.com/exchange/{trading_pair.replace('/','_').upper()}?type=linear_swap"
     elif exchange_id == 'bitfinex' or exchange_id == 'bitfinex2':
@@ -31,12 +38,18 @@ def get_perpetual_swap_url(exchange_id, trading_pair):
         if quote=='BTC':
             return f"https://trading.bitfinex.com/t/{base}F0:{quote}F0"
     elif exchange_id == 'gateio':
-        return f"https://www.gate.io/en/futures_trade/{trading_pair.replace('/','').upper()}"
+        return f"https://www.gate.io/en/futures_trade/{quote}/{trading_pair.replace('/','_').upper()}"
     elif exchange_id == 'kucoin':
         return f"https://futures.kucoin.com/trade/{trading_pair.replace('/','-')}-SWAP"
     elif exchange_id == 'coinex':
         # return f"https://www.coinex.com/swap/{trading_pair.replace('/','').upper()}"
         return f"https://www.coinex.com/futures/{trading_pair.replace('/','-').upper()}"
+    elif exchange_id == 'poloniex':
+        return f"https://www.poloniex.com/futures/trade/{base.upper}{quote.upper}PERP"
+    elif exchange_id == 'lbank2':
+        return f"https://www.lbank.com/futures/{base.lower}{quote.lower}/"
+    elif exchange_id == 'lbank':
+        return f"https://www.lbank.com/futures/{base.lower}{quote.lower}/"
     else:
         return "Exchange not supported"
 
@@ -140,7 +153,7 @@ def get_exchange_url(exchange_id, exchange_object,symbol):
     elif exchange_id == 'huobipro':
         return f"https://www.huobi.com/en-us/exchange/{market['base'].lower()}_{market['quote'].lower()}/"
     elif exchange_id == 'bybit':
-        return f"https://www.bybit.com/app/exchange/{market['base']}{market['quote']}"
+        return f"https://www.bybit.com/ru-RU/trade/spot/{market['base']}/{market['quote']}"
     elif exchange_id == 'hitbtc3':
         return f"https://hitbtc.com/{market['base']}-to-{market['quote']}"
     elif exchange_id == 'mexc' or exchange_id == 'mexc3':
@@ -155,6 +168,12 @@ def get_exchange_url(exchange_id, exchange_object,symbol):
         return f"https://trade.kucoin.com/{market['base']}-{market['quote']}"
     elif exchange_id == 'coinex':
         return f"https://www.coinex.com/exchange/{market['base'].lower()}-{market['quote'].lower()}"
+    elif exchange_id == 'poloniex':
+        return f"https://www.poloniex.com/trade/{market['base'].upper()}_{market['quote'].upper()}/?type=spot"
+    elif exchange_id == 'lbank2':
+        return f"https://www.lbank.com/trade/{market['base'].lower()}_{market['quote'].lower()}/"
+    elif exchange_id == 'lbank':
+        return f"https://www.lbank.com/trade/{market['base'].lower()}_{market['quote'].lower()}/"
     # elif exchange_id == 'bitstamp':
     #     return f"https://www.bitstamp.net/markets/{market['base'].lower()}/{market['quote'].lower()}/"
     else:
@@ -282,6 +301,21 @@ def get_maker_tiered_fees(exchange_object):
     maker_fees = trading_fees['tiers']['maker']
     return maker_fees
 
+def get_spread_at_timestamp(exchange_object, symbol, timestamp):
+    # exchange = getattr(ccxt, exchange_name)()
+    order_book = exchange_object.fetch_order_book(symbol, timestamp=timestamp)
+    bid = order_book['bids'][0][0] if len(order_book['bids']) > 0 else None
+    ask = order_book['asks'][0][0] if len(order_book['asks']) > 0 else None
+    spread = ask - bid if (bid is not None and ask is not None) else None
+    return spread
+
+def get_spread(exchange_instance, symbol):
+    # exchange = getattr(ccxt, exchange_id)()
+    orderbook = exchange_instance.fetch_order_book(symbol)
+    bid = orderbook['bids'][0][0] if len(orderbook['bids']) > 0 else None
+    ask = orderbook['asks'][0][0] if len(orderbook['asks']) > 0 else None
+    spread = ask - bid if (bid is not None and ask is not None) else None
+    return spread
 
 def get_tuple_with_lists_taker_and_maker_fees(exchange_object):
 
@@ -479,6 +513,7 @@ def get_exchange_object_and_limit_of_daily_candles(exchange_name):
     elif exchange_name == 'kucoin':
         exchange_object = ccxt.kucoin()
         limit = 20000
+
     elif exchange_name == 'coinex':
         exchange_object = ccxt.coinex()
         limit = 20000
@@ -524,6 +559,15 @@ def get_limit_of_daily_candles_original_limits(exchange_name):
     elif exchange_name == 'coinex':
         exchange_object = ccxt.coinex()
         limit = 2000
+    elif exchange_name == 'poloniex':
+        exchange_object = ccxt.poloniex()
+        limit = 500
+    elif exchange_name == 'lbank2':
+        exchange_object = ccxt.lbank2()
+        limit = 1000
+    elif exchange_name == 'lbank':
+        exchange_object = ccxt.lbank()
+        limit = 1000
     return exchange_object, limit
 
 
@@ -687,16 +731,16 @@ if __name__=="__main__":
 
     # print("get_market_type('huobipro', 'BTC/USDT')")
     for exchange_name in ['binance','huobipro','bybit',
-                            'hitbtc3','mexc','mexc3','bitfinex',
+                            'mexc3',
                             'bitfinex2','exmo','gateio','kucoin','coinex']:
-        if exchange_name!="hitbtc3":
-            continue
+        # if exchange_name!="hitbtc3":
+        #     continue
         try:
     #         print("exchange_name")
     #         print (exchange_name)
     #         # print(get_asset_type(exchange_name, 'BTC/USDT'))
             exchange_object=get_exchange_object(exchange_name)
-            exchange_object.load_markets()
+            markets=exchange_object.load_markets()
             trading_pair='BTC/USDT'
             timeframe='1d'
             exchange_object1,limit_of_daily_candles=get_limit_of_daily_candles_original_limits(exchange_name)
@@ -711,19 +755,25 @@ if __name__=="__main__":
             list_of_all_symbols_from_exchange = exchange_object.symbols
     #
             for trading_pair in  list_of_all_symbols_from_exchange:
-                print("trading_pair")
-                print(trading_pair)
-                ohlcv_df=\
-                    fetch_entire_ohlcv(exchange_object,
-                                       exchange_name,
-                                       trading_pair,
-                                       timeframe,limit_of_daily_candles)
-                print("final_ohlcv_df")
-                print(ohlcv_df)
-    #
-    #         # url=get_perpetual_swap_url(exchange_name,trading_pair)
-    #         # print("url")
-    #         # print(url)
+                # print("trading_pair")
+                # print(trading_pair)
+                if trading_pair!='BTC/USDT':
+                    continue
+                # ohlcv_df=\
+                #     fetch_entire_ohlcv(exchange_object,
+                #                        exchange_name,
+                #                        trading_pair,
+                #                        timeframe,limit_of_daily_candles)
+                # print("final_ohlcv_df")
+                # print(ohlcv_df)
+                # asset_type=get_asset_type2(markets,trading_pair)
+                spread=get_spread(exchange_object,trading_pair)
+                print(f"spread for {exchange_name}")
+                print(spread)
+                # timestamp_of_spread=1586333711
+                # spread_at_timestamp = get_spread_at_timestamp(exchange_object, trading_pair,timestamp_of_spread)
+                # print(f"spread_at_timestamp for {exchange_name}")
+                # print(spread_at_timestamp)
         except:
             traceback.print_exc()
 

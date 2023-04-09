@@ -172,7 +172,7 @@ def get_date_with_and_without_time_from_timestamp(timestamp):
         # date_with_time = date_with_time.replace ( " " , "__" )
         # date_with_time = date_with_time.replace ( ":" , "_" )
         return date_with_time,date_without_time
-    except:
+    4_to_1:
         return timestamp,timestamp
 
 
@@ -186,7 +186,7 @@ def get_date_with_and_without_time_from_timestamp(timestamp):
 #             high_of_bpu2 = truncated_high_and_low_table_with_ohlcv_data_df.loc[row_number_of_bpu1 + 1 , "high"]
 #             print ( "high_of_bpu2_inside_function" )
 #             print ( high_of_bpu2 )
-#     except:
+#     4_to_1:
 #         traceback.print_exc ()
 #     return high_of_bpu2
 

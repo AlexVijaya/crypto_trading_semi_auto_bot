@@ -948,8 +948,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                         table_with_ohlcv_data_df)
 
                 # do not short unshortable assets
-                if asset_type == 'spot':
-                    continue
+                # if asset_type == 'spot':
+ #                   continue
 
             except:
                 traceback.print_exc()
@@ -1463,6 +1463,8 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "timestamp_of_third_bar_after_breakout_and_more"] = timestamp_of_third_bar_after_breakout_and_more
+                                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                                0, "position_entry_timestamp"] = timestamp_of_third_bar_after_breakout_and_more
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0, "open_of_third_bar_after_breakout_and_more"] = open_of_third_bar_after_breakout_and_more
                                                             df_with_level_atr_bpu_bsu_etc.loc[

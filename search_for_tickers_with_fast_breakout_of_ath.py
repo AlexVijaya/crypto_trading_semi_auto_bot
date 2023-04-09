@@ -794,9 +794,13 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
 
                                         try:
                                             open_of_possible_breakout_bar=np.nan
+                                            timestamp_of_possible_breakout_bar=np.nan
                                             try:
                                                 open_of_possible_breakout_bar=\
                                                     table_with_ohlcv_data_df_slice_numpy_array[number_of_last_row_in_np_array_row_slice][1]
+                                                timestamp_of_possible_breakout_bar = \
+                                                    table_with_ohlcv_data_df_slice_numpy_array[
+                                                        number_of_last_row_in_np_array_row_slice][0]
                                             except:
                                                 pass
                                             close_of_bar_before_breakout = \
@@ -853,6 +857,10 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
                                                                 0 , "human_date_of_pre_breakout_bar"] = date_of_current_timestamp
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0 , "open_of_possible_breakout_bar"] = open_of_possible_breakout_bar
+                                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                                0, "timestamp_of_possible_breakout_bar"] = timestamp_of_possible_breakout_bar
+                                                            df_with_level_atr_bpu_bsu_etc.loc[
+                                                                0, "position_entry_timestamp"] = timestamp_of_possible_breakout_bar
                                                             df_with_level_atr_bpu_bsu_etc.loc[
                                                                 0 , "min_volume_over_last_n_days"] = min_volume_over_last_n_days
                                                             df_with_level_atr_bpu_bsu_etc.loc[
