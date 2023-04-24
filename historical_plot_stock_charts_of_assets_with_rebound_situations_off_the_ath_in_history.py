@@ -56,7 +56,7 @@ def get_date_with_and_without_time_from_timestamp(timestamp):
 
 
 
-def connect_to_postres_db_without_deleting_it_first(database ):
+def connect_to_postgres_db_without_deleting_it_first(database ):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -154,11 +154,11 @@ def plot_ohlcv_chart_with_levels_formed_by_rebound_off_ath (name_of_folder_where
     counter=0
 
     engine_for_stock_tickers_ohlcv_db , connection_to_stock_tickers_ohlcv = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_levels_formed_by_rebound_off_ath_are_stored ,\
     connection_to_db_where_levels_formed_by_rebound_off_ath_are_stored = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_levels_formed_by_rebound_off_ath_are_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_levels_formed_by_rebound_off_ath_are_stored )
 
     table_of_levels_formed_by_rebound_off_ath_df = pd.read_sql ( f'''select * from {table_where_levels_formed_by_rebound_off_ath_are_stored} ;''' ,
                                                  connection_to_db_where_levels_formed_by_rebound_off_ath_are_stored )

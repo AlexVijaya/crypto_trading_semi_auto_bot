@@ -17,7 +17,7 @@ from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database,database_exists
 
 
-def connect_to_postres_db_with_deleting_it_first(database):
+def connect_to_postgres_db_with_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -387,7 +387,7 @@ def fetch_historical_usdt_pairs_asynchronously(engine,exchanges_list,timeframe):
 def fetch_all_ohlcv_tables(timeframe,database_name):
 
     engine , connection_to_ohlcv_for_usdt_pairs =\
-        connect_to_postres_db_with_deleting_it_first (database_name)
+        connect_to_postgres_db_with_deleting_it_first (database_name)
     exchanges_list = ccxt.exchanges
     how_many_exchanges = len ( exchanges_list )
     step_for_exchanges = 50

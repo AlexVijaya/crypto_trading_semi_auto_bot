@@ -23,10 +23,10 @@ from pytz import timezone
 
 def drop_table(table_name, engine):
     conn = engine.connect()
-    query = text(f"DROP TABLE IF EXISTS {table_name}")
+    query = text(f'''DROP TABLE IF EXISTS "{table_name}"''')
     conn.execute(query)
     conn.close()
-def connect_to_postres_db_with_deleting_it_first(database):
+def connect_to_postgres_db_with_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -518,7 +518,7 @@ def get_real_time_bitcoin_price():
     last_bitcoin_price=btc_ticker['close']
     return last_bitcoin_price
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -549,7 +549,7 @@ def connect_to_postres_db_without_deleting_it_first(database):
 def get_list_of_tables_in_db_with_db_as_parameter(database_where_ohlcv_for_cryptos_is):
     '''get list of all tables in db which is given as parameter'''
     engine_for_ohlcv_data_for_cryptos, connection_to_ohlcv_data_for_cryptos = \
-        connect_to_postres_db_without_deleting_it_first(database_where_ohlcv_for_cryptos_is)
+        connect_to_postgres_db_without_deleting_it_first(database_where_ohlcv_for_cryptos_is)
 
     inspector = inspect(engine_for_ohlcv_data_for_cryptos)
     list_of_tables_in_db = inspector.get_table_names()
@@ -623,7 +623,7 @@ def fetch_historical_usdt_pairs_asynchronously(last_bitcoin_price,engine,exchang
 def fetch_all_ohlcv_tables(timeframe,database_name,last_bitcoin_price):
 
     engine , connection_to_ohlcv_for_usdt_pairs =\
-        connect_to_postres_db_without_deleting_it_first (database_name)
+        connect_to_postgres_db_without_deleting_it_first (database_name)
     exchanges_list = ccxt.exchanges
     how_many_exchanges = len ( exchanges_list )
     step_for_exchanges = 50

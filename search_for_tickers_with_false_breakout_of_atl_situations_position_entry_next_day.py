@@ -19,6 +19,9 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
 from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time2 import fill_df_with_info_if_ath_was_broken_on_other_exchanges
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time2 import fill_df_with_info_if_atl_was_broken_on_other_exchanges
+
 
 def get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(ohlcv_data_df):
     asset_type = ohlcv_data_df["asset_type"].iat[-1]
@@ -249,7 +252,7 @@ def insert_tp_sl_order_price_into_df(df_with_level_atr_bpu_bsu_etc,
         0, "human_datetime_when_sl_with_technical_tp_4_to_1_was_achieved"] = human_date_and_time_when_sl_was_achieved
 
     return df_with_level_atr_bpu_bsu_etc
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -783,11 +786,11 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
     engine_for_ohlcv_data_for_stocks , \
     connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_ticker_which_may_have_false_breakout_situations , \
     connection_to_db_where_ticker_which_may_have_false_breakout_situations = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ticker_which_may_have_false_breakout_situations )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ticker_which_may_have_false_breakout_situations )
 
     # drop_table ( table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be ,
     #              engine_for_db_where_ticker_which_may_have_false_breakout_situations )
@@ -1218,6 +1221,12 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
                                                                     count_min_volume_over_this_many_days).min()
                                                                 df_with_level_atr_bpu_bsu_etc.loc[
                                                                     0, "count_min_volume_over_this_many_days"] = count_min_volume_over_this_many_days
+
+                                                                try:
+                                                                    df_with_level_atr_bpu_bsu_etc.loc[
+                                                                        0, "number_of_available_bars"] = number_of_last_row_in_np_array_row_slice + 1
+                                                                except:
+                                                                    traceback.print_exc()
 
                                                                 try:
                                                                     df_with_level_atr_bpu_bsu_etc=insert_tp_sl_order_price_into_df(

@@ -368,7 +368,7 @@ def find_if_level_is_round(level):
             return level_is_round
 
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -902,11 +902,11 @@ def search_for_tickers_with_false_breakout_situations(db_where_ohlcv_data_for_st
 
     engine_for_ohlcv_data_for_stocks , \
     connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_ticker_which_may_have_false_breakout_situations , \
     connection_to_db_where_ticker_which_may_have_false_breakout_situations = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ticker_which_may_have_false_breakout_situations )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ticker_which_may_have_false_breakout_situations )
 
     drop_table ( table_where_ticker_which_may_have_false_breakout_situations_from_ath_will_be ,
                  engine_for_db_where_ticker_which_may_have_false_breakout_situations )

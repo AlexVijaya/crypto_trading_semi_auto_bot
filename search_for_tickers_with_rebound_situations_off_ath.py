@@ -19,6 +19,10 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.declarative import declarative_base
 from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_ath_breakout
 from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time import check_atl_breakout
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time2 import fill_df_with_info_if_ath_was_broken_on_other_exchanges
+from check_if_ath_or_atl_was_not_broken_over_long_periond_of_time2 import fill_df_with_info_if_atl_was_broken_on_other_exchanges
+
+
 def get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(ohlcv_data_df):
     asset_type = ohlcv_data_df["asset_type"].iat[-1]
     maker_fee = ohlcv_data_df["maker_fee"].iat[-1]
@@ -130,7 +134,7 @@ def find_if_level_is_round(level):
             return level_is_round
 
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -560,11 +564,11 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
 
     engine_for_ohlcv_data_for_stocks , \
     connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_levels_formed_by_rebound_level_will_be , \
     connection_to_db_where_levels_formed_by_rebound_level_will_be = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_levels_formed_by_rebound_level_will_be )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_levels_formed_by_rebound_level_will_be )
 
     drop_table ( table_where_ticker_which_had_rebound_situations_from_ath_will_be ,
                  engine_for_db_where_levels_formed_by_rebound_level_will_be )
@@ -913,6 +917,8 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
                             # df_with_level_atr_bpu_bsu_etc.loc[0, "приемлемый_люфт"] = calculated_backlash_from_advanced_atr
                             df_with_level_atr_bpu_bsu_etc.loc[0, "take_profit_3_to_1"] = take_profit_3_to_1
                             df_with_level_atr_bpu_bsu_etc.loc[0, "take_profit_4_to_1"] = take_profit_4_to_1
+
+
 
 
                             df_with_level_atr_bpu_bsu_etc.to_sql (

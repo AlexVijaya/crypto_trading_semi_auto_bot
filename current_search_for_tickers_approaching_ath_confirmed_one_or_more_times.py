@@ -77,7 +77,7 @@ def find_if_level_is_round(level):
             return level_is_round
 
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -147,7 +147,7 @@ def get_all_time_low_from_ohlcv_table(engine_for_ohlcv_data_for_stocks,
 
 def drop_table(table_name, engine):
     conn = engine.connect()
-    query = text(f"DROP TABLE IF EXISTS {table_name}")
+    query = text(f'''DROP TABLE IF EXISTS "{table_name}"''')
     conn.execute(query)
     conn.close()
 
@@ -639,11 +639,11 @@ def search_for_tickers_with_rebound_situations(db_where_ohlcv_data_for_stocks_is
 
     engine_for_ohlcv_data_for_stocks , \
     connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_levels_formed_by_ath_equal_to_limit_level_will_be , \
     connection_to_db_where_levels_formed_by_rebound_level_will_be = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_levels_formed_by_rebound_level_will_be )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_levels_formed_by_rebound_level_will_be )
 
     drop_table ( table_where_ticker_which_had_ath_equal_to_limit_level ,
                  engine_for_db_where_levels_formed_by_ath_equal_to_limit_level_will_be )

@@ -76,7 +76,7 @@ def find_if_level_is_round(level):
             return level_is_round
 
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -146,7 +146,7 @@ from sqlalchemy import text
 
 def drop_table(table_name, engine):
     conn = engine.connect()
-    query = text(f"DROP TABLE IF EXISTS {table_name}")
+    query = text(f'''DROP TABLE IF EXISTS "{table_name}"''')
     conn.execute(query)
     conn.close()
 
@@ -651,11 +651,11 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
 
     engine_for_ohlcv_data_for_stocks , \
     connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_ticker_which_may_have_fast_breakout_situations , \
     connection_to_db_where_ticker_which_may_have_fast_breakout_situations = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ticker_which_may_have_fast_breakout_situations )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ticker_which_may_have_fast_breakout_situations )
 
     drop_table ( table_where_ticker_which_may_have_fast_breakout_situations_from_ath_will_be ,
                  engine_for_db_where_ticker_which_may_have_fast_breakout_situations )
@@ -698,12 +698,12 @@ def search_for_tickers_with_breakout_situations(db_where_ohlcv_data_for_stocks_i
             exchange = table_with_ohlcv_data_df.loc[0 , "exchange"]
             short_name = table_with_ohlcv_data_df.loc[0 , 'short_name']
 
-            try:
-                asset_type, maker_fee, taker_fee, url_of_trading_pair = \
-                    get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
-                        table_with_ohlcv_data_df)
-            except:
-                traceback.print_exc()
+            # try:
+            #     asset_type, maker_fee, taker_fee, url_of_trading_pair = \
+            #         get_last_asset_type_url_maker_and_taker_fee_from_ohlcv_table(
+            #             table_with_ohlcv_data_df)
+            # except:
+            #     traceback.print_exc()
 
 
             # Select last 365*2 rows (last two years) of data

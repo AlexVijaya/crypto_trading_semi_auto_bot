@@ -23,7 +23,7 @@ from sqlalchemy import text
 
 def drop_table(table_name, engine):
     conn = engine.connect()
-    query = text(f"DROP TABLE IF EXISTS {table_name}")
+    query = text(f'''DROP TABLE IF EXISTS "{table_name}"''')
     conn.execute(query)
     conn.close()
 
@@ -78,7 +78,7 @@ def get_list_of_tables_in_db(engine_for_ohlcv_data_for_cryptos):
 def get_list_of_tables_in_db_with_db_as_parameter(database_where_ohlcv_for_cryptos_is):
     '''get list of all tables in db which is given as parameter'''
     engine_for_ohlcv_data_for_cryptos, connection_to_ohlcv_data_for_cryptos = \
-        connect_to_postres_db_without_deleting_it_first(database_where_ohlcv_for_cryptos_is)
+        connect_to_postgres_db_without_deleting_it_first(database_where_ohlcv_for_cryptos_is)
 
     inspector = inspect(engine_for_ohlcv_data_for_cryptos)
     list_of_tables_in_db = inspector.get_table_names()
@@ -90,7 +90,7 @@ def get_number_of_last_index(ohlcv_data_df):
     number_of_last_index = ohlcv_data_df["index"].max()
     return number_of_last_index
 
-def connect_to_postres_db_with_deleting_it_first(database):
+def connect_to_postgres_db_with_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -160,7 +160,7 @@ def connect_to_postres_db_with_deleting_it_first(database):
             f' So no new db was created' )
     return engine , connection
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -606,7 +606,7 @@ def fetch_historical_usdt_pairs_asynchronously(list_of_crypto_plus_exchange,
 def get_list_of_tables_in_db_with_db_as_parameter(database_where_ohlcv_for_cryptos_is):
     '''get list of all tables in db which is given as parameter'''
     engine_for_ohlcv_data_for_cryptos, connection_to_ohlcv_data_for_cryptos = \
-        connect_to_postres_db_without_deleting_it_first(database_where_ohlcv_for_cryptos_is)
+        connect_to_postgres_db_without_deleting_it_first(database_where_ohlcv_for_cryptos_is)
 
     inspector = inspect(engine_for_ohlcv_data_for_cryptos)
     list_of_tables_in_db = inspector.get_table_names()
@@ -624,7 +624,7 @@ def fetch_all_ohlcv_tables(timeframe,
                            list_of_crypto_plus_exchange):
 
     engine , connection_to_ohlcv_for_usdt_pairs =\
-        connect_to_postres_db_without_deleting_it_first (database_for_ohlcv_data)
+        connect_to_postgres_db_without_deleting_it_first (database_for_ohlcv_data)
     exchanges_list = ccxt.exchanges
     how_many_exchanges = len ( exchanges_list )
     step_for_exchanges = 50

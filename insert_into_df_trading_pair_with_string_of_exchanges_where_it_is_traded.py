@@ -9,7 +9,127 @@ import re
 import numpy as np
 import huobi
 import huobi_client
+import db_config
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database,database_exists
+from sqlalchemy import text
 # from huobi_client.generic import GenericClient
+def get_all_time_high_low(exchange_object, symbol):
+
+    ticker = exchange_object.fetch_ticker(symbol)
+    all_time_high = ticker['high']
+    all_time_low = ticker['low']
+    return all_time_high, all_time_low
+def connect_to_postgres_db_without_deleting_it_first(database):
+    dialect = db_config.dialect
+    driver = db_config.driver
+    password = db_config.password
+    user = db_config.user
+    host = db_config.host
+    port = db_config.port
+
+    dummy_database = db_config.dummy_database
+
+    engine = create_engine ( f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}" ,
+                             isolation_level = 'AUTOCOMMIT' , echo = True )
+    print ( f"{engine} created successfully" )
+
+    # Create database if it does not exist.
+    if not database_exists ( engine.url ):
+        create_database ( engine.url )
+        print ( f'new database created for {engine}' )
+        connection=engine.connect ()
+        print ( f'Connection to {engine} established after creating new database' )
+
+    connection = engine.connect ()
+
+    print ( f'Connection to {engine} established. Database already existed.'
+            f' So no new db was created' )
+    return engine , connection
+
+def connect_to_postgres_db_with_deleting_it_first(database):
+    dialect = db_config.dialect
+    driver = db_config.driver
+    password = db_config.password
+    user = db_config.user
+    host = db_config.host
+    port = db_config.port
+
+    dummy_database = db_config.dummy_database
+    connection = None
+
+    engine = create_engine(f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}",
+                           isolation_level='AUTOCOMMIT',
+                           echo=False,
+                           pool_pre_ping=True,
+                           pool_size=20, max_overflow=0,
+                           connect_args={'connect_timeout': 10})
+    print(f"{engine} created successfully")
+
+    # Create database if it does not exist.
+    if not database_exists(engine.url):
+        try:
+            create_database(engine.url)
+        except:
+            traceback.print_exc()
+        print(f'new database created for {engine}')
+        try:
+            connection = engine.connect()
+        except:
+            traceback.print_exc()
+        print(f'Connection to {engine} established after creating new database')
+
+    if database_exists(engine.url):
+        print("database exists ok")
+
+        try:
+            engine = create_engine(f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{dummy_database}",
+                                   isolation_level='AUTOCOMMIT', echo=False)
+        except:
+            traceback.print_exc()
+        try:
+            engine.execute(f'''REVOKE CONNECT ON DATABASE {database} FROM public;''')
+        except:
+            traceback.print_exc()
+        try:
+            engine.execute(f'''
+                                ALTER DATABASE {database} allow_connections = off;
+                                SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '{database}';
+
+                            ''')
+        except:
+            traceback.print_exc()
+        try:
+            engine.execute(f'''DROP DATABASE {database};''')
+        except:
+            traceback.print_exc()
+
+        try:
+            engine = create_engine(f"{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}",
+                                   isolation_level='AUTOCOMMIT', echo=False)
+        except:
+            traceback.print_exc()
+        try:
+            create_database(engine.url)
+        except:
+            traceback.print_exc()
+        print(f'new database created for {engine}')
+
+    try:
+        connection = engine.connect()
+    except:
+        traceback.print_exc()
+
+    print(f'Connection to {engine} established. Database already existed.'
+          f' So no new db was created')
+    return engine, connection
+def get_spread(exchange_instance, symbol):
+    # exchange = getattr(ccxt, exchange_id)()
+    orderbook = exchange_instance.fetch_order_book(symbol)
+    bid = orderbook['bids'][0][0] if len(orderbook['bids']) > 0 else None
+    ask = orderbook['asks'][0][0] if len(orderbook['asks']) > 0 else None
+    spread = ask - bid if (bid is not None and ask is not None) else None
+    return spread
 def get_perpetual_swap_url(exchange_id, trading_pair):
 
     trading_pair=trading_pair.split(":")[0]
@@ -301,21 +421,6 @@ def get_maker_tiered_fees(exchange_object):
     maker_fees = trading_fees['tiers']['maker']
     return maker_fees
 
-def get_spread_at_timestamp(exchange_object, symbol, timestamp):
-    # exchange = getattr(ccxt, exchange_name)()
-    order_book = exchange_object.fetch_order_book(symbol, timestamp=timestamp)
-    bid = order_book['bids'][0][0] if len(order_book['bids']) > 0 else None
-    ask = order_book['asks'][0][0] if len(order_book['asks']) > 0 else None
-    spread = ask - bid if (bid is not None and ask is not None) else None
-    return spread
-
-def get_spread(exchange_instance, symbol):
-    # exchange = getattr(ccxt, exchange_id)()
-    orderbook = exchange_instance.fetch_order_book(symbol)
-    bid = orderbook['bids'][0][0] if len(orderbook['bids']) > 0 else None
-    ask = orderbook['asks'][0][0] if len(orderbook['asks']) > 0 else None
-    spread = ask - bid if (bid is not None and ask is not None) else None
-    return spread
 
 def get_tuple_with_lists_taker_and_maker_fees(exchange_object):
 
@@ -500,10 +605,10 @@ def get_exchange_object_and_limit_of_daily_candles(exchange_name):
         limit = 2000
     elif exchange_name == 'bitfinex':
         exchange_object = ccxt.bitfinex()
-        limit = 10000
+        limit = 1000
     elif exchange_name == 'bitfinex2':
         exchange_object = ccxt.bitfinex2()
-        limit = 10000
+        limit = 1000
     elif exchange_name == 'exmo':
         exchange_object = ccxt.exmo()
         limit = 3000
@@ -542,10 +647,16 @@ def get_limit_of_daily_candles_original_limits(exchange_name):
         exchange_object = ccxt.mexc3()
         limit = 1000
     elif exchange_name == 'bitfinex':
-        exchange_object = ccxt.bitfinex()
+        exchange_object = ccxt.bitfinex({
+        'rateLimit': 6000,  # Set a custom rate limit of 6000 ms (6 seconds)
+        'enableRateLimit': True  # Enable rate limiting
+    })
         limit = 1000
     elif exchange_name == 'bitfinex2':
-        exchange_object = ccxt.bitfinex2()
+        exchange_object = ccxt.bitfinex2({
+        'rateLimit': 6000,  # Set a custom rate limit of 6000 ms (6 seconds)
+        'enableRateLimit': True  # Enable rate limiting
+    })
         limit = 1000
     elif exchange_name == 'exmo':
         exchange_object = ccxt.exmo()
@@ -570,7 +681,9 @@ def get_limit_of_daily_candles_original_limits(exchange_name):
         limit = 1000
     return exchange_object, limit
 
-
+def get_all_exchanges():
+    exchanges = ccxt.exchanges
+    return exchanges
 
     # if exchange_name == 'binance':
     #     exchange_object = ccxt.binance()
@@ -634,10 +747,177 @@ def get_ohlcv_okex(pair):
     timeframe = '1d'
     ohlcv = exchange.fetch_ohlcv(symbol, timeframe)
     return ohlcv
+def get_trading_pairs(exchange_object):
 
+    markets = exchange_object.load_markets()
+    trading_pairs = list(markets.keys())
+    return trading_pairs
+def get_exchange_object2(exchange_name):
+    exchange_objects = {
+        # 'aax': ccxt.aax(),
+        # 'aofex': ccxt.aofex(),
+        'ace': ccxt.ace(),
+        'alpaca': ccxt.alpaca(),
+        'ascendex': ccxt.ascendex(),
+        'bequant': ccxt.bequant(),
+        # 'bibox': ccxt.bibox(),
+        'bigone': ccxt.bigone(),
+        'binance': ccxt.binance(),
+        'binanceus': ccxt.binanceus(),
+        'binancecoinm': ccxt.binancecoinm(),
+        'binanceusdm':ccxt.binanceusdm(),
+        'bit2c': ccxt.bit2c(),
+        'bitbank': ccxt.bitbank(),
+        'bitbay': ccxt.bitbay(),
+        'bitbns': ccxt.bitbns(),
+        'bitcoincom': ccxt.bitcoincom(),
+        'bitfinex': ccxt.bitfinex(),
+        'bitfinex2': ccxt.bitfinex2(),
+        'bitflyer': ccxt.bitflyer(),
+        'bitforex': ccxt.bitforex(),
+        'bitget': ccxt.bitget(),
+        'bithumb': ccxt.bithumb(),
+        # 'bitkk': ccxt.bitkk(),
+        'bitmart': ccxt.bitmart(),
+        # 'bitmax': ccxt.bitmax(),
+        'bitmex': ccxt.bitmex(),
+        'bitpanda': ccxt.bitpanda(),
+        'bitso': ccxt.bitso(),
+        'bitstamp': ccxt.bitstamp(),
+        'bitstamp1': ccxt.bitstamp1(),
+        'bittrex': ccxt.bittrex(),
+        'bitrue':ccxt.bitrue(),
+        'bitvavo': ccxt.bitvavo(),
+        # 'bitz': ccxt.bitz(),
+        'bl3p': ccxt.bl3p(),
+        # 'bleutrade': ccxt.bleutrade(),
+        # 'braziliex': ccxt.braziliex(),
+        'bkex': ccxt.bkex(),
+        'btcalpha': ccxt.btcalpha(),
+        'btcbox': ccxt.btcbox(),
+        'btcmarkets': ccxt.btcmarkets(),
+        # 'btctradeim': ccxt.btctradeim(),
+        'btcturk': ccxt.btcturk(),
+        'btctradeua':ccxt.btctradeua(),
+        'buda': ccxt.buda(),
+        'bybit': ccxt.bybit(),
+        # 'bytetrade': ccxt.bytetrade(),
+        # 'cdax': ccxt.cdax(),
+        'cex': ccxt.cex(),
+        # 'chilebit': ccxt.chilebit(),
+        'coinbase': ccxt.coinbase(),
+        'coinbaseprime': ccxt.coinbaseprime(),
+        'coinbasepro': ccxt.coinbasepro(),
+        'coincheck': ccxt.coincheck(),
+        # 'coinegg': ccxt.coinegg(),
+        'coinex': ccxt.coinex(),
+        'coinfalcon': ccxt.coinfalcon(),
+        'coinsph':ccxt.coinsph(),
+        # 'coinfloor': ccxt.coinfloor(),
+        # 'coingi': ccxt.coingi(),
+        # 'coinmarketcap': ccxt.coinmarketcap(),
+        'cryptocom': ccxt.cryptocom(),
+        'coinmate': ccxt.coinmate(),
+        'coinone': ccxt.coinone(),
+        'coinspot': ccxt.coinspot(),
+        # 'crex24': ccxt.crex24(),
+        'currencycom': ccxt.currencycom(),
+        'delta': ccxt.delta(),
+        'deribit': ccxt.deribit(),
+        'digifinex': ccxt.digifinex(),
+        # 'dsx': ccxt.dsx(),
+        # 'dx': ccxt.dx(),
+        # 'eqonex': ccxt.eqonex(),
+        # 'eterbase': ccxt.eterbase(),
+        'exmo': ccxt.exmo(),
+        # 'exx': ccxt.exx(),
+        # 'fcoin': ccxt.fcoin(),
+        # 'fcoinjp': ccxt.fcoinjp(),
+        # 'ftx': ccxt.ftx(),
+        'flowbtc':ccxt.flowbtc(),
+        'fmfwio': ccxt.fmfwio(),
+        'gate':ccxt.gate(),
+        'gateio': ccxt.gateio(),
+        'gemini': ccxt.gemini(),
+        # 'gopax': ccxt.gopax(),
+        # 'hbtc': ccxt.hbtc(),
+        'hitbtc': ccxt.hitbtc(),
+        # 'hitbtc2': ccxt.hitbtc2(),
+        # 'hkbitex': ccxt.hkbitex(),
+        'hitbtc3': ccxt.hitbtc3(),
+        'hollaex': ccxt.hollaex(),
+        'huobijp': ccxt.huobijp(),
+        'huobipro': ccxt.huobipro(),
+        # 'ice3x': ccxt.ice3x(),
+        'idex': ccxt.idex(),
+        # 'idex2': ccxt.idex2(),
+        'indodax': ccxt.indodax(),
+        'independentreserve': ccxt.independentreserve(),
 
-
-
+        'itbit': ccxt.itbit(),
+        'kraken': ccxt.kraken(),
+        'krakenfutures': ccxt.krakenfutures(),
+        'kucoin': ccxt.kucoin(),
+        'kuna': ccxt.kuna(),
+        # 'lakebtc': ccxt.lakebtc(),
+        'latoken': ccxt.latoken(),
+        'lbank': ccxt.lbank(),
+        # 'liquid': ccxt.liquid(),
+        'luno': ccxt.luno(),
+        'lykke': ccxt.lykke(),
+        'mercado': ccxt.mercado(),
+        'mexc':ccxt.mexc(),
+        'mexc3' : ccxt.mexc3(),
+        # 'mixcoins': ccxt.mixcoins(),
+        'paymium':ccxt.paymium(),
+        'poloniexfutures':ccxt.poloniexfutures(),
+        'ndax': ccxt.ndax(),
+        'novadax': ccxt.novadax(),
+        'oceanex': ccxt.oceanex(),
+        'okcoin': ccxt.okcoin(),
+        'okex': ccxt.okex(),
+        'okex5':ccxt.okex5(),
+        'okx':ccxt.okx(),
+        'bitopro': ccxt.bitopro(),
+        'huobi': ccxt.huobi(),
+        'lbank2': ccxt.lbank2(),
+        'blockchaincom': ccxt.blockchaincom(),
+        'btcex': ccxt.btcex(),
+        'kucoinfutures': ccxt.kucoinfutures(),
+        # 'okex3': ccxt.okex3(),
+        # 'p2pb2b': ccxt.p2pb2b(),
+        # 'paribu': ccxt.paribu(),
+        'phemex': ccxt.phemex(),
+        'tokocrypto':ccxt.tokocrypto(),
+        'poloniex': ccxt.poloniex(),
+        'probit': ccxt.probit(),
+        # 'qtrade': ccxt.qtrade(),
+        'ripio': ccxt.ripio(),
+        # 'southxchange': ccxt.southxchange(),
+        'stex': ccxt.stex(),
+        # 'stronghold': ccxt.stronghold(),
+        # 'surbitcoin': ccxt.surbitcoin(),
+        # 'therock': ccxt.therock(),
+        # 'tidebit': ccxt.tidebit(),
+        'tidex': ccxt.tidex(),
+        'timex': ccxt.timex(),
+        'upbit': ccxt.upbit(),
+        # 'vcc': ccxt.vcc(),
+        'wavesexchange': ccxt.wavesexchange(),
+        'woo':ccxt.woo(),
+        'wazirx':ccxt.wazirx(),
+        'whitebit': ccxt.whitebit(),
+        # 'xbtce': ccxt.xbtce(),
+        # 'xena': ccxt.xena(),
+        'yobit': ccxt.yobit(),
+        'zaif': ccxt.zaif(),
+        'zb': ccxt.zb(),
+        'zonda':ccxt.zonda()
+    }
+    exchange_object = exchange_objects.get(exchange_name)
+    if exchange_object is None:
+        raise ValueError(f"Exchange '{exchange_name}' is not available via CCXT.")
+    return exchange_object
 def get_exchange_object(exchange_name):
     exchange_objects = {
         'binance': ccxt.binance(),
@@ -646,8 +926,14 @@ def get_exchange_object(exchange_name):
         'hitbtc3': ccxt.hitbtc3(),
         'mexc': ccxt.mexc(),
         'mexc3': ccxt.mexc3(),
-        'bitfinex': ccxt.bitfinex(),
-        'bitfinex2': ccxt.bitfinex2(),
+        'bitfinex': ccxt.bitfinex({
+        'rateLimit': 6000,  # Set a custom rate limit of 6000 ms (6 seconds)
+        'enableRateLimit': True  # Enable rate limiting
+    }),
+        'bitfinex2': ccxt.bitfinex2({
+        'rateLimit': 6000,  # Set a custom rate limit of 6000 ms (6 seconds)
+        'enableRateLimit': True  # Enable rate limiting
+    }),
         'exmo': ccxt.exmo(),
         'gateio': ccxt.gateio(),
         'kucoin': ccxt.kucoin(),
@@ -714,11 +1000,252 @@ def get_ohlcv_from_huobi_pro():
 #         df = pd.concat([df, candles_df], axis=1, sort=True)
 #
 #     return df
-def get_new_coin_listings(exchange_object):
-    '''get new coin listings from an exchange'''
-    icos = exchange_object.fetch_icos()
-    return icos
+def check_if_stable_coin_is_the_first_part_of_ticker(trading_pair):
+    trading_pair_has_stable_coin_name_as_its_first_part=False
+    stablecoin_tickers = [
+        "USDT/", "USDC/", "BUSD/", "DAI/", "FRAX/", "TUSD/", "USDP/", "USDD/",
+        "GUSD/", "XAUT/", "USTC/", "EURT/", "LUSD/", "ALUSD/", "EURS/", "USDX/",
+        "MIM/", "sEUR/", "WBTC/", "sGBP/", "sJPY/", "sKRW/", "sAUD/", "GEM/",
+        "sXAG/", "sXAU/", "sXDR/", "sBTC/", "sETH/", "sCNH/", "sCNY/", "sHKD/",
+        "sSGD/", "sCHF/", "sCAD/", "sNZD/", "sLTC/", "sBCH/", "sBNB/", "sXRP/",
+        "sADA/", "sLINK/", "sXTZ/", "sDOT/", "sFIL/", "sYFI/", "sCOMP/", "sAAVE/",
+        "sSNX/", "sMKR/", "sUNI/", "sBAL/", "sCRV/", "sLEND/", "sNEXO/", "sUMA/",
+        "sMUST/", "sSTORJ/", "sREN/", "sBSV/", "sDASH/", "sZEC/", "sEOS/", "sXTZ/",
+        "sATOM/", "sVET/", "sTRX/", "sADA/", "sDOGE/", "sDGB/"
+    ]
 
+    for first_part_in_trading_pair in stablecoin_tickers:
+        if first_part_in_trading_pair in trading_pair:
+            trading_pair_has_stable_coin_name_as_its_first_part=True
+            break
+        else:
+            continue
+    return trading_pair_has_stable_coin_name_as_its_first_part
+def return_list_of_all_stablecoin_bases_with_slash():
+    stablecoin_bases_with_slash_list = [
+        "USDT/", "USDC/", "BUSD/", "DAI/", "FRAX/", "TUSD/", "USDP/", "USDD/",
+        "GUSD/", "XAUT/", "USTC/", "EURT/", "LUSD/", "ALUSD/", "EURS/", "USDX/",
+        "MIM/", "sEUR/", "WBTC/", "sGBP/", "sJPY/", "sKRW/", "sAUD/", "GEM/",
+        "sXAG/", "sXAU/", "sXDR/", "sBTC/", "sETH/", "sCNH/", "sCNY/", "sHKD/",
+        "sSGD/", "sCHF/", "sCAD/", "sNZD/", "sLTC/", "sBCH/", "sBNB/", "sXRP/",
+        "sADA/", "sLINK/", "sXTZ/", "sDOT/", "sFIL/", "sYFI/", "sCOMP/", "sAAVE/",
+        "sSNX/", "sMKR/", "sUNI/", "sBAL/", "sCRV/", "sLEND/", "sNEXO/", "sUMA/",
+        "sMUST/", "sSTORJ/", "sREN/", "sBSV/", "sDASH/", "sZEC/", "sEOS/", "sXTZ/",
+        "sATOM/", "sVET/", "sTRX/", "sADA/", "sDOGE/", "sDGB/"
+    ]
+    return stablecoin_bases_with_slash_list
+
+def get_exchanges_for_trading_pair(df, trading_pair):
+    exchanges = []
+    for col in df.columns:
+        if trading_pair in df[col].values:
+            exchanges.append(col)
+    return exchanges
+def remove_leveraged_pairs(filtered_pairs):
+    levereged_tokens_string_list=["3S", "3L", "2S", "2L", "4S", "4L", "5S", "5L","6S", "6L"]
+    for token in levereged_tokens_string_list:
+        filtered_pairs = [pair for pair in filtered_pairs if token not in pair]
+    return filtered_pairs
+
+def remove_futures_with_expiration_and_options(filtered_pairs):
+    futures_with_expiration_and_options_ends_with_this_string=["-P", "-C", "-M",":P", ":C", ":M"]
+    for ending in futures_with_expiration_and_options_ends_with_this_string:
+        filtered_pairs = [pair for pair in filtered_pairs if ending not in pair]
+    return filtered_pairs
+
+
+def add_exchange_count(df,exchange_map):
+    # Create a new DataFrame to store the results
+    result_df = pd.DataFrame(columns=['trading_pair', 'exchange_count'])
+
+    # Define a dictionary to map exchange ids to exchange names
+
+
+    # Iterate over each row in the input DataFrame
+    for index, row in df.iterrows():
+        # Get the trading pair and the list of exchanges where it is traded
+        trading_pair = index
+        exchanges = [col for col in df.columns if row[col] != '']
+
+        # Map exchange ids to exchange names
+        exchanges = [exchange_map.get(exchange, exchange) for exchange in exchanges]
+
+        # Combine exchange names for the same exchange
+        unique_exchanges = []
+        for exchange in exchanges:
+            is_subexchange = False
+            for other_exchange in exchanges:
+                if exchange != other_exchange and exchange in other_exchange:
+                    is_subexchange = True
+                    break
+            if not is_subexchange:
+                unique_exchanges.append(exchange)
+
+        # Count the number of exchanges where the trading pair is traded
+        exchange_count = len(unique_exchanges)
+
+        # Add a new row to the result DataFrame
+        result_df = result_df.append({'trading_pair': trading_pair, 'exchange_count': exchange_count},
+                                     ignore_index=True)
+
+    # Set the trading_pair column as the index of the result DataFrame
+    result_df.set_index('trading_pair', inplace=True)
+
+    return result_df
+
+def add_exchange_count_without_append_to_df(df, exchange_map):
+    # Create a new DataFrame to store the results
+    result_df = pd.DataFrame(columns=['trading_pair', 'exchange_count'])
+
+    # Define a dictionary to map exchange ids to exchange names
+
+    # Iterate over each row in the input DataFrame
+    for index, row in df.iterrows():
+        # Get the trading pair and the list of exchanges where it is traded
+        trading_pair = index
+        exchanges = [col for col in df.columns if row[col] != '']
+
+        # Map exchange ids to exchange names
+        exchanges = [exchange_map.get(exchange, exchange) for exchange in exchanges]
+
+        # Combine exchange names for the same exchange
+        unique_exchanges = []
+        for exchange in exchanges:
+            is_subexchange = False
+            for other_exchange in exchanges:
+                if exchange != other_exchange and exchange in other_exchange:
+                    is_subexchange = True
+                    break
+            if not is_subexchange:
+                unique_exchanges.append(exchange)
+
+        # Count the number of exchanges where the trading pair is traded
+        exchange_count = len(unique_exchanges)
+
+        # Add a new row to the result DataFrame
+        result_df.loc[trading_pair] = [trading_pair, exchange_count]
+
+    # Set the trading_pair column as the index of the result DataFrame
+    result_df.set_index('trading_pair', inplace=True)
+
+    return result_df
+def get_exchanges_for_trading_pairs(df):
+    # Create a set of all unique trading pairs in the DataFrame
+    trading_pairs = set(df.values.flatten())
+
+    # Create a dictionary to store the exchanges where each trading pair is traded
+    trading_pair_exchanges = {}
+    for pair in trading_pairs:
+        print("pair")
+        print(pair)
+        exchanges = [col for col in df.columns if pair in df[col].values]
+        trading_pair_exchanges[pair] = '_'.join(exchanges)
+
+    # Create a new DataFrame from the trading_pair_exchanges dictionary
+    new_df = pd.DataFrame.from_dict(trading_pair_exchanges, orient='index', columns=['exchanges_where_pair_is_traded'])
+    new_df.index.name = 'trading_pair'
+
+    return new_df
+
+def remove_not_needed_exchanges(reduced_list, list_of_not_needed_exchanges):
+    print("reduced_list")
+    print(reduced_list)
+    print("list_of_not_needed_exchanges")
+    print(list_of_not_needed_exchanges)
+    return [exchange for exchange in reduced_list if exchange not in list_of_not_needed_exchanges]
+
+def extract_unique_exchanges(row):
+    exchanges_list = row['exchanges_where_pair_is_traded'].split('_')
+    reduced_list = []
+    list_of_not_needed_exchanges=[]
+    # for exchange in exchanges:
+    for exchange in exchanges_list:
+        found = False
+        for other_exchange in exchanges_list:
+            if other_exchange.startswith(exchange) and other_exchange != exchange:
+                found = True
+                list_of_not_needed_exchanges.append(other_exchange)
+                break
+        if not found:
+
+            reduced_list.append(exchange)
+
+    print("list_of_not_needed_exchanges")
+    print(list_of_not_needed_exchanges)
+    reduced_list_ultimate=remove_not_needed_exchanges(exchanges_list, list_of_not_needed_exchanges)
+
+    return '_'.join(reduced_list_ultimate)
+def calculate_number_of_exchanges_where_trading_pair_is_traded_on(row):
+    exchanges_list = row.split('_')
+    return(len(exchanges_list))
+def get_exchange_map_from_exchange_id_to_exchange_name(exchange_ids):
+    exchange_map = {}
+    for exchange_id in exchange_ids:
+        exchange_object=get_exchange_object2(exchange_id)
+        exchange_name = exchange_object.name
+        exchange_map[exchange_id] = exchange_name
+    return exchange_map
+
+def add_exchange_count2(df, exchange_map):
+    # Create a new DataFrame to store the results
+    result_df = pd.DataFrame(columns=['trading_pair', 'exchange_count'])
+
+    # Define a dictionary to map exchange ids to exchange names
+
+    # Iterate over each row in the input DataFrame
+    for index, row in df.iterrows():
+        # Get the trading pair and the list of exchanges where it is traded
+        trading_pair = index
+        exchanges = [col for col in df.columns if row[col] != '']
+
+        # Map exchange ids to exchange names
+        exchanges = [exchange_map.get(exchange, exchange) for exchange in exchanges]
+
+        # Combine exchange names for the same exchange
+        unique_exchanges = []
+        for exchange in exchanges:
+            is_subexchange = False
+            for other_exchange in exchanges:
+                if exchange != other_exchange and exchange in other_exchange:
+                    is_subexchange = True
+                    break
+            if not is_subexchange:
+                unique_exchanges.append(exchange)
+
+        # Count the number of exchanges where the trading pair is traded
+        exchange_count = len(unique_exchanges)
+
+        # Add a new row to the result DataFrame
+        result_df.loc[len(result_df)] = [trading_pair, exchange_count]
+
+    # Set the trading_pair column as the index of the result DataFrame
+    result_df.set_index('trading_pair', inplace=True)
+
+    return result_df
+
+def drop_table(table_name, engine):
+    conn = engine.connect()
+    query = text(f'''DROP TABLE IF EXISTS "{table_name}"''')
+    conn.execute(query)
+    conn.close()
+def remove_trading_pairs_which_contain_stablecoin_as_base(filtered_pairs,stablecoin_bases_with_slash_list):
+    filtered_pairs = [pair for pair in filtered_pairs if
+                      not any(pair.startswith(ticker) for ticker in stablecoin_bases_with_slash_list)]
+    return filtered_pairs
+
+def get_all_time_high_low_string(df_with_strings_where_each_pair_is_traded):
+    for i, row in df_with_strings_where_each_pair_is_traded.iterrows():
+        exchanges_where_pair_is_traded = row["exchanges_where_pair_is_traded"]
+        all_time_high_str, all_time_low_str = [], []
+        for exchange_id in exchanges_where_pair_is_traded.split("_"):
+            all_time_high, all_time_low = get_all_time_high_low(exchange_id, row.name)
+            all_time_high_str.append(str(all_time_high))
+            all_time_low_str.append(str(all_time_low))
+        all_time_high_str = "_".join(all_time_high_str)
+        all_time_low_str = "_".join(all_time_low_str)
+        df_with_strings_where_each_pair_is_traded.loc[i, "string_of_all_aths"] = all_time_high_str
+        df_with_strings_where_each_pair_is_traded.loc[i, "string_of_all_atls"] = all_time_low_str
+    return df_with_strings_where_each_pair_is_traded
 if __name__=="__main__":
     # list_of_shortable_assets_for_binance=get_shortable_assets_for_binance()
     # print("list_of_shortable_assets_for_binance")
@@ -732,24 +1259,22 @@ if __name__=="__main__":
     # print("list_of_shortable_assets_for_gateio")
     # print(list_of_shortable_assets_for_gateio)
 
+
     # print("get_market_type('huobipro', 'BTC/USDT')")
-    for exchange_name in ['binance','huobipro','bybit',
-                            'mexc3',
-                            'bitfinex2','exmo','gateio','kucoin','coinex']:
+    # for exchange_name in ['binance','huobipro','bybit','poloniex',
+    #                         'mexc3',
+    #                         'bitfinex2','exmo','gateio','kucoin','coinex']:
         # if exchange_name!="hitbtc3":
         #     continue
-        try:
+        # try:
     #         print("exchange_name")
     #         print (exchange_name)
     #         # print(get_asset_type(exchange_name, 'BTC/USDT'))
-            exchange_object=get_exchange_object(exchange_name)
-            markets=exchange_object.load_markets()
-            trading_pair='BTC/USDT'
-            timeframe='1d'
-            exchange_object1,limit_of_daily_candles=get_limit_of_daily_candles_original_limits(exchange_name)
-            icos=get_new_coin_listings(exchange_object)
-            print("icos")
-            print(icos)
+    #         exchange_object=get_exchange_object(exchange_name)
+    #         markets=exchange_object.load_markets()
+    #         trading_pair='BTC/USDT'
+    #         timeframe='1d'
+    #         exchange_object1,limit_of_daily_candles=get_limit_of_daily_candles_original_limits(exchange_name)
     #         print(f"limit_of_daily_candles_for{exchange_name}")
     #         print(limit_of_daily_candles)
     #         # maker_tiered_fees,taker_tiered_fees=get_maker_taker_fees_for_huobi(exchange_object)
@@ -772,16 +1297,14 @@ if __name__=="__main__":
     #             #                        timeframe,limit_of_daily_candles)
     #             # print("final_ohlcv_df")
     #             # print(ohlcv_df)
-    #             # asset_type=get_asset_type2(markets,trading_pair)
-    #             spread=get_spread(exchange_object,trading_pair)
-    #             print(f"spread for {exchange_name}")
-    #             print(spread)
-    #             # timestamp_of_spread=1586333711
-    #             # spread_at_timestamp = get_spread_at_timestamp(exchange_object, trading_pair,timestamp_of_spread)
-    #             # print(f"spread_at_timestamp for {exchange_name}")
-    #             # print(spread_at_timestamp)
-        except:
-            traceback.print_exc()
+    #             asset_type=get_asset_type2(markets,trading_pair)
+    #             if asset_type=="spot":
+    #
+    #                 url=get_exchange_url(exchange_name,exchange_object,trading_pair)
+    #                 print(f"url_for_swap for {exchange_name}")
+    #                 print(url)
+    #     except:
+    #         traceback.print_exc()
 
     # trading_pair="BTC/USDT"
     # timeframe="1d"
@@ -844,3 +1367,85 @@ if __name__=="__main__":
     # ohlcv_df=get_huobi_ohlcv()
     # print("ohlcv_df")
     # print(ohlcv_df)
+    db_with_trading_pair_statistics="db_with_trading_pair_statistics"
+    table_name_where_exchanges_with_all_available_trading_pairs_are="available_trading_pairs_for_each_exchange"
+    table_with_strings_where_each_pair_is_traded="exchanges_where_each_pair_is_traded"
+    engine_for_db_with_trading_pair_statistics, connection_to_db_with_trading_pair_statistics=\
+        connect_to_postgres_db_without_deleting_it_first(db_with_trading_pair_statistics)
+    drop_table(table_with_strings_where_each_pair_is_traded,engine_for_db_with_trading_pair_statistics)
+    # list_of_all_exchanges=get_all_exchanges()
+    # data_dict={}
+    # # exchange_map=get_exchange_map_from_exchange_id_to_exchange_name(list_of_all_exchanges)
+    # # print("exchange_map")
+    # # print(exchange_map)
+    # for exchange_name in list_of_all_exchanges:
+    #     try:
+    #         exchange_object=get_exchange_object2(exchange_name)
+    #         list_of_trading_pairs_for_one_exchange=get_trading_pairs(exchange_object)
+    #
+    #         print(f"list_of_trading_pairs_for_one_exchange for {exchange_name}" )
+    #         print(list_of_trading_pairs_for_one_exchange)
+    #         print(f"number of all pairs for {exchange_name} is  {len(list_of_trading_pairs_for_one_exchange)}")
+    #
+    #         filtered_pairs = [pair for pair in list_of_trading_pairs_for_one_exchange if "/USDT" in pair]
+    #         print(f"filtered_pairs for {exchange_name}")
+    #         print(filtered_pairs)
+    #         print(f"number of all usdt pairs for {exchange_name} is  {len(filtered_pairs)}")
+    #         stablecoin_bases_with_slash_list=return_list_of_all_stablecoin_bases_with_slash()
+    #         filtered_pairs =\
+    #             remove_trading_pairs_which_contain_stablecoin_as_base(
+    #                 filtered_pairs,
+    #                 stablecoin_bases_with_slash_list)
+    #         print(filtered_pairs)
+    #         filtered_pairs=remove_leveraged_pairs(filtered_pairs)
+    #         filtered_pairs=remove_futures_with_expiration_and_options(filtered_pairs)
+    #         print(f"number of all usdt pairs without stablecoin base and without levereged tokens "
+    #               f"for {exchange_name} is  {len(filtered_pairs)}")
+    #         data_dict[exchange_name] = filtered_pairs
+    #
+    #     except:
+    #         traceback.print_exc()
+    # df_with_trading_pairs_for_each_exchange = pd.DataFrame.from_dict(data_dict, orient='index')
+    # df_with_trading_pairs_for_each_exchange = df_with_trading_pairs_for_each_exchange.transpose()
+    # # print("df_with_trading_pairs")
+    # # print(df_with_trading_pairs_for_each_exchange.head(200).to_string())
+    # # trading_pair="PIAS/USDT"
+    # # exchanges_for_trading_pair_list=get_exchanges_for_trading_pair(df_with_trading_pairs_for_each_exchange)
+    # # print("exchanges_for_"trading_pair_list")
+    # # print(exchanges_for_tra"ding_pair_list)
+
+    #
+    # # df_with_strings_where_each_pair_is_traded_plus_exchange_count=\
+    # #     add_exchange_count2(df_with_strings_where_each_pair_is_traded, exchange_map)
+    #
+    # # apply the function to each row and create the new column
+    # df_with_strings_where_each_pair_is_traded['unique_exchanges_where_pair_is_traded'] =\
+    #     df_with_strings_where_each_pair_is_traded.apply(extract_unique_exchanges, axis=1)
+    #
+    # df_with_trading_pairs_for_each_exchange.to_sql(table_name_where_exchanges_with_all_available_trading_pairs_are,
+    #                engine_for_db_with_trading_pair_statistics,
+    #                if_exists='replace')
+    df_with_trading_pairs_for_each_exchange = \
+        pd.read_sql_query(f'''select * from "{table_name_where_exchanges_with_all_available_trading_pairs_are}"''',
+                          engine_for_db_with_trading_pair_statistics)
+    print("df_with_trading_pairs_for_each_exchange")
+    print(df_with_trading_pairs_for_each_exchange)
+    df_with_trading_pairs_for_each_exchange = df_with_trading_pairs_for_each_exchange.drop('index', axis=1)
+    df_with_strings_where_each_pair_is_traded = get_exchanges_for_trading_pairs(df_with_trading_pairs_for_each_exchange)
+    print("df_with_strings_where_each_pair_is_traded")
+    print(df_with_strings_where_each_pair_is_traded)
+
+
+    # apply the function to each row and create the new column
+    df_with_strings_where_each_pair_is_traded['unique_exchanges_where_pair_is_traded'] =\
+        df_with_strings_where_each_pair_is_traded.apply(extract_unique_exchanges, axis=1)
+
+    df_with_strings_where_each_pair_is_traded['number_of_exchanges_where_pair_is_traded_on']=\
+        df_with_strings_where_each_pair_is_traded['unique_exchanges_where_pair_is_traded'].apply(calculate_number_of_exchanges_where_trading_pair_is_traded_on)
+
+
+
+
+    df_with_strings_where_each_pair_is_traded.to_sql(table_with_strings_where_each_pair_is_traded,
+                                                   engine_for_db_with_trading_pair_statistics,
+                                                   if_exists='replace')

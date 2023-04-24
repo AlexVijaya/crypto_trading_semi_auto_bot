@@ -28,7 +28,7 @@ def get_list_of_tables_in_db(engine_for_ohlcv_data_for_stocks):
 
     return list_of_tables_in_db
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -58,7 +58,7 @@ def connect_to_postres_db_without_deleting_it_first(database):
 def drop_all_duplicates_from_all_tables_in_postgres_database(database_name_with_historic_found_models):
     engine_for_ohlcv_data_for_cryptos, \
         connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first(database_name_with_historic_found_models)
+        connect_to_postgres_db_without_deleting_it_first(database_name_with_historic_found_models)
 
     list_of_tables_in_ohlcv_db = \
         get_list_of_tables_in_db(engine_for_ohlcv_data_for_cryptos)

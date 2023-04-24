@@ -53,7 +53,7 @@ def find_if_level_is_round(level):
             return level_is_round
 
 
-def connect_to_postres_db_without_deleting_it_first(database):
+def connect_to_postgres_db_without_deleting_it_first(database):
     dialect = db_config.dialect
     driver = db_config.driver
     password = db_config.password
@@ -111,7 +111,7 @@ from sqlalchemy import text
 
 def drop_table(table_name, engine):
     conn = engine.connect()
-    query = text(f"DROP TABLE IF EXISTS {table_name}")
+    query = text(f'''DROP TABLE IF EXISTS "{table_name}"''')
     conn.execute(query)
     conn.close()
 
@@ -173,11 +173,11 @@ def check_if_asset_is_approaching_its_ath(percentage_between_ath_and_closing_pri
 
     engine_for_ohlcv_data_for_stocks , \
     connection_to_ohlcv_data_for_stocks = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_ohlcv_data_for_stocks_is_stored )
 
     engine_for_db_where_levels_formed_by_ath_will_be , \
     connection_to_db_where_levels_formed_by_ath_will_be = \
-        connect_to_postres_db_without_deleting_it_first ( db_where_levels_formed_by_ath_will_be )
+        connect_to_postgres_db_without_deleting_it_first ( db_where_levels_formed_by_ath_will_be )
 
     drop_table ( table_where_levels_formed_by_ath_will_be ,
                  engine_for_db_where_levels_formed_by_ath_will_be )
